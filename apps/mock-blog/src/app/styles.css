@@ -1,0 +1,382 @@
+:root {
+  --ink: #17252b;
+  --lake: #286b70;
+  --mist: #e8f0f2;
+  --paper: #fbfdfd;
+  --signal: #ff684f;
+  --sun: #f2d56b;
+  --line: rgba(23, 37, 43, 0.18);
+  color: var(--ink);
+  background: var(--mist);
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0 7.5rem,
+      var(--signal) 7.5rem 7.75rem,
+      transparent 7.75rem
+    ),
+    var(--mist);
+}
+
+a {
+  color: inherit;
+}
+
+a:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 4px;
+}
+
+.site-shell {
+  width: min(100%, 92rem);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 5rem) 3rem;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 5.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-name {
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.site-header p,
+.back-link {
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.blog-intro {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  min-height: 56vh;
+  padding: clamp(4rem, 10vw, 9rem) 0 5rem;
+}
+
+.margin-note {
+  align-self: start;
+  color: var(--lake);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.section-label {
+  margin: 0 0 1.25rem;
+  color: var(--lake);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.blog-intro h1,
+.article-header h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: clamp(3.5rem, 8vw, 8rem);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+}
+
+.intro-copy {
+  max-width: 38rem;
+  margin: 2.25rem 0 0;
+  color: #445a61;
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  line-height: 1.6;
+}
+
+.post-index {
+  margin-left: calc(7rem + clamp(2rem, 6vw, 6rem));
+  border-top: 1px solid var(--line);
+}
+
+.post-index > header {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.25rem 0;
+}
+
+.post-index > header .section-label {
+  margin: 0;
+}
+
+.post-index > header span {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.post-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.38fr) minmax(0, 1fr);
+  min-height: 28rem;
+  overflow: hidden;
+  color: var(--paper);
+  background: var(--ink);
+  text-decoration: none;
+}
+
+.post-number {
+  align-self: end;
+  padding: 1rem;
+  color: var(--sun);
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: clamp(6rem, 14vw, 13rem);
+  letter-spacing: -0.08em;
+  line-height: 0.62;
+  opacity: 0.88;
+  transform: translateX(-0.12em);
+  transition: transform 240ms ease;
+}
+
+.post-card:hover .post-number {
+  transform: translateX(0);
+}
+
+.post-card-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 6vw, 5rem);
+}
+
+.post-meta {
+  display: flex;
+  gap: 1.5rem;
+  color: var(--lake);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.post-card .post-meta {
+  color: #a8d9d7;
+}
+
+.post-card h2 {
+  max-width: 11ch;
+  margin: 2rem 0 1rem;
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: clamp(2.7rem, 5vw, 5.4rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.94;
+}
+
+.post-card-copy > p {
+  max-width: 36rem;
+  color: #bdd0d2;
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+.read-link {
+  margin-top: 2rem;
+  color: var(--sun);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-left: calc(7rem + clamp(2rem, 6vw, 6rem));
+  padding: 2rem 0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.post-layout {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(4rem, 9vw, 8rem) 0;
+}
+
+.article-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--lake);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.article-header {
+  padding-bottom: 4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-header h1 {
+  max-width: 12ch;
+}
+
+.article-deck {
+  max-width: 43rem;
+  margin: 2.5rem 0;
+  color: #445a61;
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  line-height: 1.55;
+}
+
+.article-copy {
+  max-width: 43rem;
+  padding-top: 3.5rem;
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: clamp(1.12rem, 1.5vw, 1.28rem);
+  line-height: 1.78;
+}
+
+.article-copy p {
+  margin: 0 0 1.7em;
+}
+
+.article-copy .opening::first-letter {
+  float: left;
+  margin: 0.08em 0.12em 0 0;
+  color: var(--signal);
+  font-size: 4.5em;
+  line-height: 0.72;
+}
+
+.article-copy h2 {
+  margin: 2.5em 0 0.7em;
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+
+.article-copy blockquote {
+  margin: 2.8rem 0;
+  border-left: 0.35rem solid var(--signal);
+  padding: 0.25rem 0 0.25rem 1.6rem;
+  color: var(--lake);
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  line-height: 1.35;
+}
+
+.article-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  max-width: 43rem;
+  margin-top: 4rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  body {
+    background:
+      linear-gradient(
+        90deg,
+        transparent 0 1rem,
+        var(--signal) 1rem 1.2rem,
+        transparent 1.2rem
+      ),
+      var(--mist);
+  }
+
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .blog-intro,
+  .post-layout,
+  .post-card {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-intro {
+    min-height: auto;
+  }
+
+  .margin-note,
+  .article-rail {
+    writing-mode: horizontal-tb;
+  }
+
+  .post-index,
+  .site-footer {
+    margin-left: 0;
+  }
+
+  .post-number {
+    position: absolute;
+    right: -0.08em;
+    bottom: 0;
+    opacity: 0.14;
+  }
+
+  .post-card-copy {
+    position: relative;
+    z-index: 1;
+  }
+
+  .article-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

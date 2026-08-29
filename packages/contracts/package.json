@@ -1,0 +1,18 @@
+{
+  "name": "@galleon/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "4.5.2"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

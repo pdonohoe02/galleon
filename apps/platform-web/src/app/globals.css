@@ -1,0 +1,365 @@
+:root {
+  --ink: #0b1736;
+  --ocean: #2449d8;
+  --ocean-dark: #183291;
+  --wake: #dce4ff;
+  --foam: #f7f9ff;
+  --coin: #f0b429;
+  --mint: #77c8b4;
+  --line: rgba(11, 23, 54, 0.16);
+  color: var(--ink);
+  background: var(--foam);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0 49.8%,
+      rgba(36, 73, 216, 0.05) 50%,
+      transparent 50.2%
+    ),
+    var(--foam);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--coin);
+  outline-offset: 4px;
+}
+
+.marketing-shell,
+.dashboard-shell {
+  min-height: 100vh;
+  padding: 0 clamp(1.25rem, 5vw, 5rem) 4rem;
+}
+
+.masthead,
+.dashboard-header {
+  min-height: 5.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wordmark {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+  text-transform: none;
+}
+
+.demo-flag {
+  border-left: 0.35rem solid var(--coin);
+  padding: 0.35rem 0 0.35rem 0.75rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
+  gap: clamp(3rem, 8vw, 8rem);
+  align-items: end;
+  min-height: 64vh;
+  padding: 6rem 0 4rem;
+}
+
+.eyebrow,
+.panel-label {
+  margin: 0 0 1rem;
+  color: var(--ocean);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.dashboard-intro h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(3.3rem, 7vw, 7.8rem);
+  font-weight: 500;
+  letter-spacing: -0.065em;
+  line-height: 0.92;
+}
+
+.lede {
+  max-width: 42rem;
+  margin: 2.25rem 0 0;
+  color: #415070;
+  font-size: clamp(1.05rem, 1.6vw, 1.32rem);
+  line-height: 1.65;
+}
+
+.passage {
+  padding-bottom: 0.5rem;
+}
+
+.passage-node {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.passage-node span,
+.portal-index {
+  color: var(--ocean);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.passage-node strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+}
+
+.passage-node small {
+  grid-column: 2;
+  color: #65718b;
+}
+
+.passage-line {
+  width: 1px;
+  height: 3rem;
+  margin: 0.35rem 0 0.35rem 1.15rem;
+  background: linear-gradient(var(--ocean), var(--mint));
+}
+
+.portal-grid {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.5fr) repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.portal-grid header,
+.portal-card {
+  min-height: 20rem;
+  padding: 2rem;
+}
+
+.portal-card {
+  position: relative;
+  border-left: 1px solid var(--line);
+  text-decoration: none;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.portal-card:hover {
+  color: white;
+  background: var(--ocean);
+  transform: translateY(-0.35rem);
+}
+
+.publisher-card:hover {
+  color: var(--ink);
+  background: var(--mint);
+}
+
+.portal-card h2 {
+  max-width: 10ch;
+  margin: 4.5rem 0 1rem;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+.portal-card p {
+  max-width: 25rem;
+  line-height: 1.6;
+}
+
+.portal-action {
+  position: absolute;
+  bottom: 2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.dashboard-header .status-dot {
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: var(--coin);
+}
+
+.dashboard-header .status-dot.ready {
+  background: var(--mint);
+}
+
+.dashboard-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: 3rem;
+  align-items: end;
+  padding: 5rem 0;
+}
+
+.dashboard-intro h1 {
+  font-size: clamp(3rem, 6vw, 6.5rem);
+}
+
+.balance-block {
+  border-left: 1px solid var(--line);
+  padding: 1rem 0 1rem 2rem;
+}
+
+.balance-block span,
+.balance-block small {
+  display: block;
+  color: #65718b;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.balance-block strong {
+  display: block;
+  margin: 0.5rem 0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 3.4rem;
+  letter-spacing: -0.07em;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  border: 1px solid var(--line);
+}
+
+.panel {
+  min-height: 22rem;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+}
+
+.panel + .panel {
+  border-left: 1px solid var(--line);
+}
+
+.panel h2 {
+  max-width: 14ch;
+  margin: 3.5rem 0 1rem;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 2.35rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.panel p {
+  max-width: 34rem;
+  color: #52607b;
+  line-height: 1.65;
+}
+
+.panel button,
+.panel code {
+  display: inline-block;
+  margin-top: 1.5rem;
+  border: 0;
+  padding: 0.85rem 1rem;
+  color: var(--ink);
+  background: var(--wake);
+  font:
+    600 0.78rem ui-monospace,
+    "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+
+.empty-state {
+  display: flex;
+  align-items: end;
+  gap: 1.5rem;
+  min-height: 15rem;
+}
+
+.empty-state span {
+  color: var(--ocean);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 8rem;
+  line-height: 0.75;
+}
+
+.publisher-shell {
+  --ocean: #156b5d;
+  --wake: #d6f0e9;
+}
+
+@media (max-width: 800px) {
+  .hero,
+  .dashboard-intro,
+  .dashboard-grid,
+  .portal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    min-height: auto;
+    padding-top: 4rem;
+  }
+
+  .portal-card,
+  .panel + .panel {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .portal-grid header {
+    min-height: auto;
+  }
+
+  .dashboard-intro {
+    padding: 4rem 0;
+  }
+
+  .balance-block {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

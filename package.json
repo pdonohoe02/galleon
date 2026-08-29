@@ -1,0 +1,33 @@
+{
+  "name": "galleon",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Agent-native payment infrastructure for publisher-hosted sources.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "db:generate": "pnpm --filter @galleon/database db:generate",
+    "db:migrate": "pnpm --filter @galleon/database db:migrate",
+    "dev": "pnpm --parallel --filter @galleon/platform-web --filter @galleon/publisher-demo --filter @galleon/mock-blog --filter @galleon/mcp dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.4.0",
+    "eslint": "10.9.1",
+    "globals": "17.11.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11"
+  }
+}

@@ -1,0 +1,208 @@
+:root {
+  color: #17142c;
+  background: #f1efff;
+  font-family: "Charter", "Bitstream Charter", Georgia, serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 80% 12%,
+      rgba(99, 78, 210, 0.12),
+      transparent 28rem
+    ),
+    #f1efff;
+}
+
+a {
+  color: inherit;
+}
+
+a:focus-visible {
+  outline: 3px solid #ff7a45;
+  outline-offset: 4px;
+}
+
+.publication-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  min-height: 5rem;
+  padding: 0 clamp(1.25rem, 5vw, 5rem);
+  border-bottom: 1px solid rgba(23, 20, 44, 0.2);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.publication-name {
+  font-family: "Charter", "Bitstream Charter", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+  text-transform: none;
+}
+
+.webmcp-state {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid currentColor;
+}
+
+.webmcp-state[data-supported="true"] {
+  color: #166d56;
+}
+
+.article-shell {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.32fr) minmax(0, 1fr);
+  gap: clamp(2rem, 8vw, 8rem);
+  max-width: 92rem;
+  margin: 0 auto;
+  padding: clamp(4rem, 9vw, 9rem) clamp(1.25rem, 5vw, 5rem);
+}
+
+.issue-note {
+  align-self: start;
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  border-top: 0.5rem solid #ff7a45;
+  padding-top: 1rem;
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.issue-note strong {
+  margin: 2rem 0 0.25rem;
+  color: #634ed2;
+  font-family: "Charter", "Bitstream Charter", Georgia, serif;
+  font-size: 4.5rem;
+  font-weight: 400;
+  letter-spacing: -0.08em;
+  line-height: 0.8;
+}
+
+.article-copy {
+  max-width: 58rem;
+}
+
+.article-kicker {
+  margin: 0 0 1.25rem;
+  color: #634ed2;
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.article-copy h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(3.3rem, 7vw, 7.6rem);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+}
+
+.standfirst {
+  max-width: 43rem;
+  margin: 2.5rem 0 0;
+  color: #514b6d;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  line-height: 1.55;
+}
+
+.byline {
+  display: flex;
+  gap: 2rem;
+  margin: 3rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(23, 20, 44, 0.2);
+  border-bottom: 1px solid rgba(23, 20, 44, 0.2);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+}
+
+.abstract {
+  max-width: 42rem;
+}
+
+.abstract h2,
+.locked-source h2 {
+  font-size: 1.7rem;
+  font-weight: 600;
+}
+
+.abstract p,
+.locked-source p {
+  color: #403b58;
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+.locked-source {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  margin-top: 4rem;
+  padding: clamp(2rem, 5vw, 4rem);
+  color: #f9f8ff;
+  background: #241d52;
+}
+
+.locked-source p,
+.locked-source .article-kicker {
+  color: #d7d0ff;
+}
+
+.lock-mark {
+  color: #ff7a45;
+  font-size: clamp(5rem, 10vw, 9rem);
+  line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .publication-header,
+  .article-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .publication-header {
+    gap: 0.5rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .issue-note {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .issue-note strong {
+    margin: 0;
+  }
+
+  .locked-source {
+    grid-template-columns: 1fr;
+  }
+
+  .lock-mark {
+    display: none;
+  }
+}

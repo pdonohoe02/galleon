@@ -1,0 +1,25 @@
+# Local product documentation
+/docs/
+
+# Dependencies and generated output
+node_modules/
+.pnpm-store/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local environment and secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Editor and operating system files
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+pnpm-debug.log*
