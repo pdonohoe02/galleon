@@ -10,7 +10,13 @@ export function WebMcpTools() {
     let active = true;
     let dispose: (() => Promise<void>) | undefined;
 
-    void registerGalleonSourceTools().then((registration) => {
+    void registerGalleonSourceTools({
+      onUnlock: (result) => {
+        window.dispatchEvent(
+          new CustomEvent("galleon:source-unlocked", { detail: result }),
+        );
+      },
+    }).then((registration) => {
       dispose = registration.dispose;
       if (active) {
         setSupported(registration.supported);

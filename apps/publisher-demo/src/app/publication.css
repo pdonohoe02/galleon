@@ -176,6 +176,45 @@ a:focus-visible {
   line-height: 1;
 }
 
+.unlocked-source {
+  margin-top: 4rem;
+  padding: clamp(2rem, 5vw, 4rem);
+  border-top: 0.5rem solid #166d56;
+  background: #fbfaff;
+}
+
+.unlocked-source h2 {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+.unlocked-source h3 {
+  margin-top: 3rem;
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.unlocked-source p {
+  max-width: 43rem;
+  color: #403b58;
+  font-size: 1.08rem;
+  line-height: 1.8;
+}
+
+.unlocked-source footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(23, 20, 44, 0.2);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 0.82rem;
+}
+
 @media (max-width: 760px) {
   .publication-header,
   .article-shell {

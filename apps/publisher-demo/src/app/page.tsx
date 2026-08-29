@@ -1,4 +1,5 @@
 import { WebMcpTools } from "./webmcp-tools";
+import { UnlockedSource } from "./unlocked-source";
 
 export default function PublisherDemoPage() {
   return (
@@ -56,6 +57,7 @@ export default function PublisherDemoPage() {
               ◇
             </span>
           </section>
+          <UnlockedSource />
         </div>
       </article>
     </main>

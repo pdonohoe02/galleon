@@ -1,13 +1,20 @@
-export default function ConsumerDashboardPage() {
+import { DEMO_IDS, formatUsd } from "@galleon/contracts";
+
+import { galleon } from "@/lib/galleon";
+
+export const dynamic = "force-dynamic";
+
+export default async function ConsumerDashboardPage() {
+  const [wallet, purchases] = await Promise.all([
+    galleon.getWalletSummary(DEMO_IDS.consumerWallet),
+    galleon.getConsumerPurchases(DEMO_IDS.consumerWallet),
+  ]);
+
   return (
     <main className="dashboard-shell consumer-shell">
       <header className="dashboard-header">
-        <a className="wordmark" href="/">
-          Galleon
-        </a>
-        <div>
-          <span className="status-dot" /> Wallet MCP not connected
-        </div>
+        <a className="wordmark" href="/">Galleon</a>
+        <div><span className="status-dot ready" /> Wallet MCP ready</div>
       </header>
 
       <section className="dashboard-intro">
@@ -17,7 +24,7 @@ export default function ConsumerDashboardPage() {
         </div>
         <div className="balance-block">
           <span>Demo balance</span>
-          <strong>$5.00</strong>
+          <strong>{wallet.display_balance}</strong>
           <small>Non-withdrawable credits</small>
         </div>
       </section>
@@ -25,21 +32,35 @@ export default function ConsumerDashboardPage() {
       <section className="dashboard-grid">
         <article className="panel connection-panel">
           <p className="panel-label">Agent connection</p>
-          <h2>Connect Galleon to Codex</h2>
+          <h2>Galleon wallet MCP</h2>
           <p>
-            The wallet MCP will handle identity and purchase approval outside
-            publisher pages.
+            The MCP holds the trusted wallet context, validates signed publisher
+            offers, and returns publisher-scoped entitlements.
           </p>
-          <button type="button" disabled>
-            Connection setup coming next
-          </button>
+          <code>http://127.0.0.1:3100/mcp</code>
         </article>
         <article className="panel ledger-panel">
           <p className="panel-label">Recent purchases</p>
-          <div className="empty-state">
-            <span>0</span>
-            <p>Your first unlocked source will appear here.</p>
-          </div>
+          {purchases.length === 0 ? (
+            <div className="empty-state">
+              <span>0</span><p>Your first unlocked source will appear here.</p>
+            </div>
+          ) : (
+            <ol className="activity-list">
+              {purchases.map((purchase) => (
+                <li key={purchase.purchase_id}>
+                  <div>
+                    <strong>{purchase.title}</strong>
+                    <span>{purchase.publisher_name}</span>
+                  </div>
+                  <div>
+                    <strong>{formatUsd(purchase.amount_minor)}</strong>
+                    <time>{new Date(purchase.purchased_at).toLocaleString("en-US")}</time>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </article>
       </section>
     </main>

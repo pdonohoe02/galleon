@@ -316,6 +316,44 @@ button:focus-visible {
   line-height: 0.75;
 }
 
+.activity-list {
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.activity-list li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.activity-list li > div:last-child {
+  align-items: end;
+  text-align: right;
+}
+
+.activity-list span,
+.activity-list time,
+.sales-note {
+  color: #65718b;
+  font-size: 0.78rem;
+}
+
+.sales-note {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
 .publisher-shell {
   --ocean: #156b5d;
   --wake: #d6f0e9;

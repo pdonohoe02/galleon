@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@galleon/contracts"],
+  agentRules: false,
+  transpilePackages: ["@galleon/contracts", "@galleon/crypto", "@galleon/database"],
 };
 
 export default nextConfig;

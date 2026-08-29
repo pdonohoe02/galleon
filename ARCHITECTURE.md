@@ -17,6 +17,18 @@ The three Galleon web hostnames deliberately share one Next.js application. They
 
 The publisher demo is a separate application and origin because that boundary is fundamental to the product claim: paid content remains on publisher infrastructure.
 
+## Implemented local path
+
+The P0 demo path is executable against the local Postgres container:
+
+- `GET /api/galleon/offer` on the publisher creates a session-bound, five-minute offer presentation through Galleon.
+- `purchase_offer` on the authenticated wallet MCP validates that signature, enforces expected-price and wallet policy guards, posts a balanced ledger transaction, and returns a five-minute entitlement.
+- `POST /api/galleon/unlock` sends that entitlement from the publisher backend to Galleon for atomic redemption, sets first-party HttpOnly access, and returns the server-only article body and citation.
+- `/consumer` and `/publishers` read the same ledger and purchase records used by the MCP, so both dashboards update after a purchase.
+- `/.well-known/jwks.json` exposes only the local ES256 public key. The corresponding private JWK is generated at runtime at `GALLEON_SIGNING_KEY_PATH`.
+
+Demo authentication is deliberately fail-closed unless `GALLEON_DEMO_AUTH=true` and an exact bearer token is configured. Development-only credential fallbacks are disabled whenever `NODE_ENV=production`.
+
 ## Agent purchase flow
 
 1. The publisher page registers `inspect_source` and `unlock_source` from top-level JavaScript.

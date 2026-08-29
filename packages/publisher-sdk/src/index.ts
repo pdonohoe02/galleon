@@ -26,6 +26,7 @@ declare global {
 export type RegisterGalleonSourceToolsOptions = {
   inspectUrl?: string;
   modelContext?: WebMcpContext;
+  onUnlock?: (result: unknown) => void;
   unlockUrl?: string;
 };
 
@@ -105,8 +106,8 @@ export async function registerGalleonSourceTools(
       "Redeem a short-lived Galleon entitlement for the source visible on this page and return its canonical citation and paid content.",
     inputSchema: unlockSourceInputSchema,
     annotations: { readOnlyHint: false },
-    execute: async ({ entitlement_token }) =>
-      parseResponse(
+    execute: async ({ entitlement_token }) => {
+      const result = await parseResponse(
         await fetch(unlockUrl, {
           body: JSON.stringify({ entitlement_token }),
           credentials: "same-origin",
@@ -116,7 +117,10 @@ export async function registerGalleonSourceTools(
           },
           method: "POST",
         }),
-      ),
+      );
+      options.onUnlock?.(result);
+      return result;
+    },
   });
 
   return {

@@ -10,9 +10,11 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@galleon/contracts": "workspace:*",
     "jose": "6.2.10"
   },
   "devDependencies": {
+    "@types/node": "26.4.0",
     "typescript": "6.0.3"
   }
 }

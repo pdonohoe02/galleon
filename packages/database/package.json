@@ -13,6 +13,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@galleon/contracts": "workspace:*",
+    "@galleon/crypto": "workspace:*",
     "drizzle-orm": "0.45.2",
     "postgres": "3.4.9"
   },

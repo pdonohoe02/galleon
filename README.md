@@ -23,6 +23,7 @@ Prerequisites: Node.js 22+, pnpm 11+, and Docker.
 cp .env.example .env
 docker compose up -d postgres
 pnpm install
+pnpm db:migrate
 pnpm dev
 ```
 
@@ -30,15 +31,21 @@ Local services:
 
 | Surface           | URL                                        |
 | ----------------- | ------------------------------------------ |
-| Landing page      | `http://galleon.localhost:3000`            |
-| Consumer wallet   | `http://app.galleon.localhost:3000`        |
-| Publisher console | `http://publishers.galleon.localhost:3000` |
+| Landing page      | `http://galleon.localhost:3200`            |
+| Consumer wallet   | `http://app.galleon.localhost:3200`        |
+| Publisher console | `http://publishers.galleon.localhost:3200` |
 | Publisher demo    | `http://127.0.0.1:3001`                    |
 | Mock blog         | `http://127.0.0.1:3002`                    |
 | Wallet MCP        | `http://127.0.0.1:3100/mcp`                |
 | MCP health        | `http://127.0.0.1:3100/health`             |
 
 The platform also exposes `/consumer` and `/publishers` as direct local fallbacks if wildcard localhost hostnames are unavailable.
+
+Set `GALLEON_DEMO_AUTH=true`, replace every `replace-with-*` value in `.env`,
+and send the configured bearer token when connecting Codex to the local MCP.
+The publisher API and signing key are server-only; they are never sent to the
+publisher page. For a stable production-mode local run after building, use
+`pnpm start`.
 
 ## Quality checks
 

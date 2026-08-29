@@ -1,42 +1,70 @@
-import { randomUUID } from "node:crypto";
+import { DEMO_IDS, DEMO_SOURCE } from "@galleon/contracts";
+import { type NextRequest, NextResponse } from "next/server";
 
-import { NextResponse } from "next/server";
+import { callGalleon } from "../../../../server/galleon";
+import { paidSource } from "../../../../server/paid-source";
+import {
+  deriveSessionBinding,
+  PUBLISHER_SESSION_COOKIE,
+  sessionCookieOptions,
+} from "../../../../server/session";
 
-export async function POST(request: Request) {
-  const requestId = randomUUID();
+export async function POST(request: NextRequest) {
   const body: unknown = await request.json().catch(() => undefined);
-
-  if (
-    typeof body !== "object" ||
-    body === null ||
-    !("entitlement_token" in body) ||
-    typeof body.entitlement_token !== "string"
-  ) {
+  const entitlementToken =
+    typeof body === "object" && body !== null && "entitlement_token" in body
+      ? body.entitlement_token
+      : undefined;
+  if (typeof entitlementToken !== "string" || entitlementToken.length < 100 || entitlementToken.length > 8192) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: {
-          code: "ENTITLEMENT_INVALID",
-          message: "A valid entitlement token is required.",
-          retryable: false,
-          request_id: requestId,
-        },
-      },
+      { ok: false, error: { code: "ENTITLEMENT_INVALID", message: "A valid entitlement token is required.", retryable: false, request_id: crypto.randomUUID() } },
       { status: 400 },
     );
   }
 
-  return NextResponse.json(
-    {
-      ok: false,
-      error: {
-        code: "SOURCE_LOCKED",
-        message:
-          "Entitlement redemption is not enabled in the executable skeleton.",
-        retryable: true,
-        request_id: requestId,
+  const sessionId = request.cookies.get(PUBLISHER_SESSION_COOKIE)?.value;
+  if (!sessionId) {
+    return NextResponse.json(
+      { ok: false, error: { code: "SESSION_REQUIRED", message: "Inspect this source in the same browser session before unlocking it.", retryable: true, request_id: crypto.randomUUID() } },
+      { status: 409 },
+    );
+  }
+  const binding = deriveSessionBinding(sessionId);
+
+  try {
+    const upstream = await callGalleon("/api/v1/publisher/entitlements/redeem", {
+      entitlement_token: entitlementToken,
+      resource_id: DEMO_IDS.resource,
+      publisher_origin: "http://127.0.0.1:3001",
+      redemption_nonce: binding.redemptionNonce,
+      publisher_session_hash: binding.publisherSessionHash,
+    });
+    const redemption: unknown = await upstream.json();
+    if (!upstream.ok) {
+      return NextResponse.json(redemption, { status: upstream.status, headers: { "Cache-Control": "no-store" } });
+    }
+
+    const response = NextResponse.json({
+      status: "unlocked",
+      source: {
+        resource_id: DEMO_IDS.resource,
+        canonical_url: DEMO_SOURCE.canonical_url,
+        title: DEMO_SOURCE.title,
+        content_sha256: DEMO_SOURCE.content_sha256,
+        citation: DEMO_SOURCE.citation,
+        ...paidSource,
       },
-    },
-    { status: 501 },
-  );
+      redemption,
+    }, { headers: { "Cache-Control": "private, no-store" } });
+    response.cookies.set(`northline_access_${DEMO_IDS.resource}`, "granted", {
+      ...sessionCookieOptions(),
+      maxAge: 60 * 60 * 24,
+    });
+    return response;
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: "GALLEON_UNAVAILABLE", message: "The publisher could not redeem the entitlement.", retryable: true, request_id: crypto.randomUUID() } },
+      { status: 503 },
+    );
+  }
 }
