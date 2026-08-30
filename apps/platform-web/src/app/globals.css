@@ -1,14 +1,21 @@
 /* Galleon product register — "Ice Field".
-   Pale ice page, white cards, Schibsted Grotesk, navy ink, one accent per
-   side of the ledger. No monospace anywhere: figures use tabular sans. */
+   Pale ice page, Schibsted Grotesk, navy ink, one accent per side of the
+   ledger. No monospace anywhere: figures use tabular sans.
+
+   Two structural rules from design review:
+   - Radius tops out at 6px. Only the demo pill and status dots go rounder.
+   - Nothing floats. Definition comes from a 1px border, not elevation.
+     A dashboard region is ONE bordered surface with flush sections inside,
+     not a grid of tiles. */
 
 :root {
   /* Surface */
   --gl-surface: #e6eff6;
   --gl-surface-sunken: #d9e7f1;
   --gl-surface-raised: #ffffff;
-  --gl-surface-subtle: #f7fafc;
+  --gl-surface-subtle: #f4f8fb;
   --gl-surface-inline: #f1f6fa;
+  --gl-surface-hover: #fcfdfe;
 
   /* Ink */
   --gl-text: #0a2540;
@@ -30,7 +37,6 @@
   --gl-accent-strong: #0d3e79;
   --gl-accent-wash: #dce9f7;
   --gl-accent-wash-line: #c2d9f0;
-  --gl-accent-rgb: 18, 80, 155;
 
   /* Status */
   --gl-positive: #0f6e5a;
@@ -41,12 +47,12 @@
   --gl-font-body:
     "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* Structure */
-  --gl-radius: 12px;
-  --gl-radius-sm: 8px;
-  --gl-radius-chip: 5px;
-  --gl-shadow-card: 0 1px 2px rgba(10, 37, 64, 0.04);
-  --gl-shadow-raised: 0 4px 16px rgba(10, 37, 64, 0.08);
+  /* Radius — nothing above 6px except the pill and the dots. */
+  --gl-radius-sm: 3px;
+  --gl-radius: 4px;
+  --gl-radius-control: 5px;
+  --gl-radius-card: 6px;
+  --gl-radius-pill: 999px;
 
   /* Layout */
   --gl-measure: 1080px;
@@ -63,7 +69,6 @@
   --gl-accent-strong: #0b5646;
   --gl-accent-wash: #ddede8;
   --gl-accent-wash-line: #c7e0d8;
-  --gl-accent-rgb: 15, 110, 90;
 }
 
 * {
@@ -120,6 +125,7 @@ button:focus-visible {
 }
 
 .gl-masthead--solid {
+  border-bottom-color: var(--gl-line-strong);
   background: var(--gl-surface-raised);
 }
 
@@ -165,7 +171,7 @@ button:focus-visible {
 
 .gl-surface-chip {
   padding: 4px 11px;
-  border-radius: var(--gl-radius-chip);
+  border-radius: var(--gl-radius-sm);
   color: var(--gl-accent);
   background: var(--gl-accent-wash);
   font-size: 13px;
@@ -177,7 +183,7 @@ button:focus-visible {
   align-items: center;
   gap: 7px;
   border: 1px solid var(--gl-line-strong);
-  border-radius: 999px;
+  border-radius: var(--gl-radius-pill);
   padding: 6px 12px;
   color: var(--gl-text-secondary);
   background: var(--gl-surface-sunken);
@@ -212,6 +218,10 @@ button:focus-visible {
 
 .gl-footer {
   border-top: 1px solid var(--gl-line);
+}
+
+.gl-footer--solid {
+  border-top-color: var(--gl-line-strong);
 }
 
 .gl-footer .gl-width {
@@ -258,13 +268,6 @@ button:focus-visible {
   letter-spacing: -0.02em;
 }
 
-.gl-panel-heading {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
 .gl-meta {
   color: var(--gl-text-meta);
   font-size: 13.5px;
@@ -276,7 +279,7 @@ button:focus-visible {
 .gl-page {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 28px;
   padding: 48px var(--gl-gutter) 80px;
   max-width: var(--gl-measure);
   margin: 0 auto;
@@ -290,19 +293,13 @@ button:focus-visible {
   flex-wrap: wrap;
 }
 
-.gl-card {
-  border: 1px solid var(--gl-line);
-  border-radius: var(--gl-radius);
-  background: var(--gl-surface-raised);
-  box-shadow: var(--gl-shadow-card);
-}
-
+/* The balance is a figure on the page, not a card. Boxing it made the page
+   read as a grid of tiles. */
 .gl-balance {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 236px;
-  padding: 20px 26px;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .gl-balance-label {
@@ -311,10 +308,10 @@ button:focus-visible {
 }
 
 .gl-balance-value {
-  font-size: 38px;
+  font-size: 44px;
   font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -0.035em;
+  line-height: 1;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -324,20 +321,60 @@ button:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Origin / endpoint panel ---------- */
+/* ---------- The flush surface ---------- */
 
-.gl-detail-panel {
+/* One bordered surface per region. Panels, section headings, and table rows
+   are flush sections inside it, divided by rules — never separate tiles. */
+.gl-flush {
+  border: 1px solid var(--gl-line-strong);
+  border-radius: var(--gl-radius-card);
+  background: var(--gl-surface-raised);
+  overflow: hidden;
+}
+
+.gl-flush > * + * {
+  border-top: 1px solid var(--gl-line-soft);
+}
+
+.gl-flush-panel {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 32px;
-  padding: 30px 32px;
+  padding: 26px 28px;
+}
+
+.gl-flush-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 28px;
+}
+
+.gl-flush-head .gl-section-heading {
+  font-size: 16px;
+}
+
+.gl-flush-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 28px;
+  background: var(--gl-surface-subtle);
+  color: var(--gl-text-meta);
+  font-size: 13.5px;
+}
+
+.gl-flush-note strong {
+  color: var(--gl-text);
+  font-weight: 500;
 }
 
 .gl-detail-copy {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
 }
 
 .gl-detail-title {
@@ -345,6 +382,13 @@ button:focus-visible {
   align-items: center;
   gap: 11px;
   flex-wrap: wrap;
+}
+
+.gl-detail-title h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 .gl-detail-copy p {
@@ -370,8 +414,8 @@ button:focus-visible {
 /* Replaces the retired CodeSnippet: sans, still selectable. */
 .gl-inline-value {
   border: 1px solid var(--gl-line-inline);
-  border-radius: var(--gl-radius-sm);
-  padding: 11px 16px;
+  border-radius: var(--gl-radius);
+  padding: 10px 14px;
   color: var(--gl-text);
   background: var(--gl-surface-inline);
   font-size: 14.5px;
@@ -383,7 +427,7 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border-radius: 4px;
+  border-radius: var(--gl-radius-sm);
   padding: 3px 9px;
   color: var(--gl-positive);
   background: var(--gl-positive-wash);
@@ -392,7 +436,6 @@ button:focus-visible {
 }
 
 .gl-tag--row {
-  border-radius: var(--gl-radius-chip);
   padding: 4px 10px;
   font-size: 13px;
 }
@@ -405,47 +448,21 @@ button:focus-visible {
   background: currentcolor;
 }
 
-/* ---------- Section + ledger table ---------- */
-
-.gl-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.gl-section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.gl-table {
-  overflow: hidden;
-}
+/* ---------- Ledger rows ---------- */
 
 .gl-row {
   display: grid;
   gap: 20px;
   align-items: center;
-  padding: 17px 26px;
+  padding: 15px 28px;
 }
 
 .gl-row--head {
-  padding: 12px 26px;
-  border-bottom: 1px solid var(--gl-line-soft);
+  padding: 10px 28px;
   background: var(--gl-surface-subtle);
   color: var(--gl-text-meta);
   font-size: 13px;
   font-weight: 500;
-}
-
-.gl-row + .gl-row {
-  border-top: 1px solid var(--gl-line-softest);
-}
-
-.gl-row--head + .gl-row {
-  border-top: 0;
 }
 
 .gl-cell-title {
@@ -483,22 +500,6 @@ button:focus-visible {
   grid-template-columns: 1fr 190px 100px;
 }
 
-.gl-table-note {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  border-top: 1px solid var(--gl-line-soft);
-  padding: 13px 26px;
-  background: var(--gl-surface-subtle);
-  font-size: 13.5px;
-  color: var(--gl-text-meta);
-}
-
-.gl-table-note strong {
-  color: var(--gl-text);
-  font-weight: 500;
-}
-
 /* Column headers stay visible on an empty ledger: they tell a first-run
    reader what will appear here. */
 .gl-empty {
@@ -517,7 +518,7 @@ button:focus-visible {
   width: 56px;
   height: 56px;
   border: 1px solid var(--gl-line-inline);
-  border-radius: 10px;
+  border-radius: var(--gl-radius);
   background: #edf4f9;
   color: var(--gl-text-disabled);
   font-size: 22px;
@@ -536,6 +537,12 @@ button:focus-visible {
 }
 
 /* ---------- Marketing ---------- */
+
+.gl-card {
+  border: 1px solid var(--gl-line-strong);
+  border-radius: var(--gl-radius-card);
+  background: var(--gl-surface-raised);
+}
 
 .gl-hero {
   display: flex;
@@ -559,7 +566,7 @@ button:focus-visible {
 
 .gl-button {
   border: 1px solid transparent;
-  border-radius: var(--gl-radius-sm);
+  border-radius: var(--gl-radius-control);
   padding: 13px 22px;
   color: #fff;
   background: var(--gl-accent);
@@ -641,13 +648,15 @@ button:focus-visible {
   color: var(--gl-text);
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease;
+    background 160ms ease;
 }
 
+/* Hover shifts the border to that side's accent and lifts the fill a shade.
+   No shadow — nothing on this page floats. */
 .gl-portal-card:hover {
   color: var(--gl-text);
   border-color: var(--gl-accent);
-  box-shadow: var(--gl-shadow-raised);
+  background: var(--gl-surface-hover);
 }
 
 .gl-portal-mark {
@@ -656,7 +665,7 @@ button:focus-visible {
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 9px;
+  border-radius: var(--gl-radius-control);
   color: var(--gl-accent);
   background: var(--gl-accent-wash);
   font-size: 15px;
@@ -702,7 +711,7 @@ button:focus-visible {
     border-top: 1px solid var(--gl-line-soft);
   }
 
-  .gl-detail-panel {
+  .gl-flush-panel {
     grid-template-columns: 1fr;
     align-items: start;
   }
@@ -713,6 +722,10 @@ button:focus-visible {
 
   .gl-inline-value {
     white-space: normal;
+  }
+
+  .gl-balance {
+    align-items: flex-start;
   }
 
   .gl-hero {

@@ -276,7 +276,7 @@ a:focus-visible {
 .locked-source {
   margin-top: 40px;
   border: 1px solid var(--gl-line-strong);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 32px 32px 28px;
   background: var(--gl-surface);
   color: var(--gl-text);
@@ -319,7 +319,7 @@ a:focus-visible {
   flex-shrink: 0;
   width: 42px;
   height: 42px;
-  border-radius: 10px;
+  border-radius: 4px;
   background: #d3e2ef;
   color: var(--gl-accent);
   font-size: 18px;
@@ -327,8 +327,8 @@ a:focus-visible {
 
 .offer-terms {
   margin: 24px 0 0;
-  border: 1px solid var(--gl-line);
-  border-radius: 10px;
+  border: 1px solid var(--gl-line-strong);
+  border-radius: 4px;
   overflow: hidden;
   background: var(--gl-surface-raised);
 }
@@ -386,7 +386,7 @@ a:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border-radius: 5px;
+  border-radius: 3px;
   padding: 5px 11px;
   color: var(--gl-accent);
   background: var(--gl-accent-wash);
@@ -442,7 +442,7 @@ a:focus-visible {
   gap: 6px;
   margin-top: 36px;
   border: 1px solid var(--nr-line);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 22px 24px;
   background: var(--nr-citation);
 }
