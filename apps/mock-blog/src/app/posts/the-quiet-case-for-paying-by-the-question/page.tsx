@@ -10,35 +10,49 @@ export const metadata: Metadata = {
 
 export default function MockPostPage() {
   return (
-    <main className="site-shell article-page">
-      <header className="site-header">
-        <Link className="site-name" href="/">
-          Drift Signal
-        </Link>
-        <Link className="back-link" href="/">
-          ← All notes
-        </Link>
+    <div className="site-shell">
+      <header className="site-header site-header--sticky">
+        <div className="site-header-inner">
+          <Link className="site-name" href="/">
+            Drift Signal
+          </Link>
+          <Link className="back-link" href="/">
+            All notes
+          </Link>
+        </div>
       </header>
 
-      <article className="post-layout">
-        <aside className="article-rail">
-          <span>Issue 001</span>
-          <span>{mockPost.readingTime}</span>
-        </aside>
+      <main>
+        <article className="post-layout">
+          <h1>{mockPost.title}</h1>
+          <p className="article-deck">{mockPost.excerpt}</p>
 
-        <div className="article-body">
-          <header className="article-header">
-            <p className="section-label">Independent publishing</p>
-            <h1>{mockPost.title}</h1>
-            <p className="article-deck">{mockPost.excerpt}</p>
-            <div className="post-meta">
-              <span>By {mockPost.author}</span>
-              <time dateTime={mockPost.date}>{mockPost.displayDate}</time>
+          <div className="byline">
+            <span className="author">{mockPost.author}</span>
+            <span className="dot" aria-hidden="true">
+              ·
+            </span>
+            <time dateTime={mockPost.date}>{mockPost.displayDate}</time>
+            <span className="dot" aria-hidden="true">
+              ·
+            </span>
+            <span>{mockPost.readingTime}</span>
+          </div>
+
+          <figure className="lead-figure">
+            <div
+              className="image-placeholder image-placeholder--lead"
+              aria-hidden="true"
+            >
+              Lead image
             </div>
-          </header>
+            <figcaption>
+              Drop the opening illustration or photograph here.
+            </figcaption>
+          </figure>
 
           <div className="article-copy">
-            <p className="opening">
+            <p>
               The subscription is a beautiful agreement when a reader wants a
               continuing relationship with a publication. It is a clumsy one
               when they need a single fact, chart, or argument today.
@@ -64,8 +78,10 @@ export default function MockPostPage() {
               introduction; a durable reader relationship can still follow.
             </p>
             <blockquote>
-              The smallest viable paywall may be a clear promise, an exact
-              price, and a receipt that travels.
+              <p>
+                The smallest viable paywall may be a clear promise, an exact
+                price, and a receipt that travels.
+              </p>
             </blockquote>
             <h2>Keep the source where it lives</h2>
             <p>
@@ -81,8 +97,8 @@ export default function MockPostPage() {
             <p>That is the whole note.</p>
             <Link href="/">Return to Drift Signal →</Link>
           </footer>
-        </div>
-      </article>
-    </main>
+        </article>
+      </main>
+    </div>
   );
 }

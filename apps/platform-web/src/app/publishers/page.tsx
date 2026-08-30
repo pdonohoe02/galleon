@@ -4,53 +4,118 @@ import { galleon } from "@/lib/galleon";
 
 export const dynamic = "force-dynamic";
 
+const publisherOrigin =
+  process.env.GALLEON_PUBLISHER_ORIGIN ?? "http://127.0.0.1:3001";
+
+/** `offer_available` reads as "Offer available" — the tag spells the state out. */
+function statusLabel(status: string): string {
+  const words = status.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export default async function PublisherDashboardPage() {
   const summary = await galleon.getPublisherSummary(DEMO_IDS.publisher);
+  const latestSale = summary.sales[0];
 
   return (
-    <main className="dashboard-shell publisher-shell">
-      <header className="dashboard-header">
-        <a className="wordmark" href="/">Galleon</a>
-        <div><span className="status-dot ready" /> Publisher origin verified</div>
+    <div className="gl-shell" data-gl-theme="publisher">
+      <header className="gl-masthead gl-masthead--solid">
+        <div className="gl-width">
+          <div className="gl-masthead-left">
+            <a className="gl-wordmark" href="/">
+              Galleon
+            </a>
+            <span className="gl-surface-chip">Publishers</span>
+          </div>
+          <span className="gl-status">Publisher origin verified</span>
+        </div>
       </header>
 
-      <section className="dashboard-intro">
-        <div>
-          <p className="eyebrow">Publisher console</p>
-          <h1>Price the source. Keep the relationship.</h1>
-        </div>
-        <div className="balance-block">
-          <span>Gross demo sales</span>
-          <strong>{summary.display_balance}</strong>
-          <small>{summary.purchase_count} {summary.purchase_count === 1 ? "purchase" : "purchases"}</small>
-        </div>
-      </section>
+      <main>
+        <div className="gl-page">
+          <section className="gl-page-head">
+            <h1 className="gl-display">
+              Price the source. Keep the relationship.
+            </h1>
+            <div className="gl-card gl-balance">
+              <span className="gl-balance-label">Gross demo sales</span>
+              <span className="gl-balance-value">
+                {summary.display_balance}
+              </span>
+              <span className="gl-balance-caption">
+                {summary.purchase_count}{" "}
+                {summary.purchase_count === 1 ? "purchase" : "purchases"}
+              </span>
+            </div>
+          </section>
 
-      <section className="dashboard-grid">
-        <article className="panel connection-panel">
-          <p className="panel-label">Verified origin</p>
-          <h2>Northline Review</h2>
-          <p>
-            The source body remains on the publisher server. Galleon sees the
-            offer, ledger movement, entitlement, and redemption receipt.
-          </p>
-          <code>http://127.0.0.1:3001</code>
-        </article>
-        <article className="panel ledger-panel">
-          <p className="panel-label">Sources &amp; offers</p>
-          <ol className="activity-list">
-            {summary.resources.map((resource) => (
-              <li key={resource.resource_id}>
-                <div><strong>{resource.title}</strong><span>{resource.status}</span></div>
-                <strong>{formatUsd(resource.amount_minor)}</strong>
-              </li>
-            ))}
-          </ol>
-          {summary.sales.length > 0 && (
-            <div className="sales-note">Latest sale: {summary.sales[0]?.title}</div>
-          )}
-        </article>
-      </section>
-    </main>
+          <section className="gl-card gl-detail-panel">
+            <div className="gl-detail-copy">
+              <div className="gl-detail-title">
+                <h2 className="gl-panel-heading">Northline Review</h2>
+                <span className="gl-tag">Origin verified</span>
+              </div>
+              <p>
+                The source body remains on the publisher server. Galleon sees
+                the offer, ledger movement, entitlement, and redemption receipt.
+              </p>
+            </div>
+            <div className="gl-inline-value-group">
+              <span className="gl-inline-label">Origin</span>
+              <span className="gl-inline-value">{publisherOrigin}</span>
+            </div>
+          </section>
+
+          <section className="gl-section">
+            <div className="gl-section-head">
+              <h2 className="gl-section-heading">Sources &amp; offers</h2>
+              <span className="gl-meta">
+                {summary.resources.length}{" "}
+                {summary.resources.length === 1 ? "source" : "sources"} ·{" "}
+                {summary.purchase_count} sold
+              </span>
+            </div>
+
+            <div className="gl-card gl-table">
+              <div className="gl-row gl-row--head gl-sources-row">
+                <span>Source</span>
+                <span>Status</span>
+                <span className="gl-align-end">Price</span>
+              </div>
+
+              {summary.resources.map((resource) => (
+                <div
+                  className="gl-row gl-sources-row"
+                  key={resource.resource_id}
+                >
+                  <span className="gl-cell-title">{resource.title}</span>
+                  <span>
+                    <span className="gl-tag gl-tag--row">
+                      {statusLabel(resource.status)}
+                    </span>
+                  </span>
+                  <span className="gl-cell-amount">
+                    {formatUsd(resource.amount_minor)}
+                  </span>
+                </div>
+              ))}
+
+              {latestSale && (
+                <div className="gl-table-note">
+                  <span>Latest sale</span>
+                  <strong>{latestSale.title}</strong>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer className="gl-footer">
+        <div className="gl-width">
+          <span>Galleon settles in demo credits. No real money moves.</span>
+        </div>
+      </footer>
+    </div>
   );
 }

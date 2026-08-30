@@ -4,56 +4,64 @@ import { mockPost } from "../lib/post";
 
 export default function BlogHomePage() {
   return (
-    <main className="site-shell">
+    <div className="site-shell">
       <header className="site-header">
-        <Link className="site-name" href="/">
-          Drift Signal
-        </Link>
-        <p>One essay at a time, from the independent web.</p>
+        <div className="site-header-inner">
+          <Link className="site-name" href="/">
+            Drift Signal
+          </Link>
+          <span className="site-tagline">
+            One essay at a time, from the independent web
+          </span>
+        </div>
       </header>
 
-      <section className="blog-intro">
-        <div className="margin-note" aria-hidden="true">
-          Dispatches
-        </div>
-        <div>
-          <p className="section-label">A very small publication</p>
-          <h1>Notes for people who still think websites can be places.</h1>
-          <p className="intro-copy">
-            Drift Signal follows the economics and craft of publishing useful
-            work on the open web.
-          </p>
-        </div>
-      </section>
+      <main>
+        <div className="index-body">
+          <section className="blog-intro">
+            <h1>Notes for people who still think websites can be places.</h1>
+            <p className="intro-copy">
+              Drift Signal follows the economics and craft of publishing useful
+              work on the open web.
+            </p>
+          </section>
 
-      <section className="post-index" aria-labelledby="latest-post">
-        <header>
-          <p className="section-label" id="latest-post">
-            Latest and only
-          </p>
-          <span>Issue 001</span>
-        </header>
-
-        <Link className="post-card" href={`/posts/${mockPost.slug}`}>
-          <div className="post-number" aria-hidden="true">
-            001
-          </div>
-          <div className="post-card-copy">
-            <div className="post-meta">
-              <time dateTime={mockPost.date}>{mockPost.displayDate}</time>
-              <span>{mockPost.readingTime}</span>
+          <section className="post-index" aria-labelledby="latest-post">
+            <div className="index-rule" id="latest-post">
+              <strong>Latest and only</strong>
+              <span>Issue 001</span>
             </div>
-            <h2>{mockPost.title}</h2>
-            <p>{mockPost.excerpt}</p>
-            <span className="read-link">Read the note →</span>
-          </div>
-        </Link>
-      </section>
+
+            <Link className="post-card" href={`/posts/${mockPost.slug}`}>
+              <div className="post-card-copy">
+                <div className="post-meta">
+                  <time dateTime={mockPost.date}>{mockPost.displayDate}</time>
+                  <span className="dot" aria-hidden="true">
+                    ·
+                  </span>
+                  <span>{mockPost.readingTime}</span>
+                </div>
+                <h2>{mockPost.title}</h2>
+                <p>{mockPost.excerpt}</p>
+                <span className="read-link">Read the note →</span>
+              </div>
+              <div
+                className="image-placeholder image-placeholder--thumb"
+                aria-hidden="true"
+              >
+                Thumbnail
+              </div>
+            </Link>
+          </section>
+        </div>
+      </main>
 
       <footer className="site-footer">
-        <span>Drift Signal</span>
-        <span>Madrid · 2026</span>
+        <div className="site-footer-inner">
+          <span>Drift Signal</span>
+          <span>Madrid · 2026</span>
+        </div>
       </footer>
-    </main>
+    </div>
   );
 }
