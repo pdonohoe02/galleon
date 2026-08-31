@@ -1,109 +1,246 @@
-// Keep platform navigation on the origin that served this page. Relative URLs
-// preserve the active protocol, hostname, and port in every environment.
-const consumerUrl = "/consumer";
-const publisherUrl = "/publishers";
+import { KnowledgeGraph } from "./knowledge-graph";
 
-const passage = [
-  { caption: "Free metadata", label: "Offer", step: "01" },
-  { caption: "Exact price", label: "Approve", step: "02" },
-  { caption: "Signed access", label: "Unlock", step: "03" },
+const consumerUrl =
+  process.env.GALLEON_CONSUMER_URL ?? "http://app.galleon.localhost:3000";
+const publisherUrl =
+  process.env.GALLEON_PUBLISHER_URL ??
+  "http://publishers.galleon.localhost:3000";
+const blogUrl = process.env.GALLEON_MOCK_BLOG_URL ?? "http://127.0.0.1:3002";
+const publisherDemoUrl =
+  process.env.GALLEON_PUBLISHER_DEMO_URL ?? "http://127.0.0.1:3001";
+
+const steps = [
+  {
+    body: "Checks what the source covers and what it costs.",
+    title: "Inspect",
+  },
+  {
+    body: "Pays the publisher's price from the budget you set.",
+    title: "Purchase",
+  },
+  { body: "Uses the source to answer the question you asked.", title: "Read" },
+];
+
+/* Illustrative figures for the marketing statement — not the live ledger. */
+const sampleStatement = [
+  {
+    amount: "$0.07",
+    publisher: "Northline Review",
+    title: "The freight data nobody published",
+  },
+  {
+    amount: "$0.12",
+    publisher: "Harbor Index",
+    title: "Port throughput, Q2 revision",
+  },
+  {
+    amount: "$0.04",
+    publisher: "Drift Signal",
+    title: "Interview: the last dispatcher",
+  },
+];
+
+const sampleSales = [
+  { amount: "+$0.07", title: "The freight data nobody published" },
+  { amount: "+$0.12", title: "Port throughput, Q2 revision" },
+];
+
+const assurances = [
+  {
+    body: "Codex cannot spend past it. Raise or lower the cap in your wallet at any time.",
+    title: "Your budget is a hard cap",
+  },
+  {
+    body: "The source, the publisher, the amount, and the signed entitlement that unlocked it.",
+    title: "Every purchase has a receipt",
+  },
+  {
+    body: "Galleon never hosts the content. Access is granted on the publisher's own origin, at their canonical URL.",
+    title: "Publishers keep the page",
+  },
 ];
 
 export default function MarketingPage() {
   return (
-    <div className="gl-shell gl-shell--marketing">
-      <header className="gl-masthead">
-        <div className="gl-width">
-          <a className="gl-wordmark" href="/">
-            Galleon
-          </a>
-          <nav className="gl-masthead-right" aria-label="Primary navigation">
-            <a className="gl-nav-link" href={consumerUrl}>
-              Wallet
+    <div className="glm">
+      <div className="glm-night">
+        <KnowledgeGraph />
+        <div className="glm-graph-scrim" aria-hidden="true" />
+
+        <header className="glm-nav">
+          <div className="glm-width">
+            <a className="glm-wordmark" href="/">
+              Galleon
             </a>
-            <a className="gl-nav-link" href={publisherUrl}>
-              Publishers
+            <nav className="glm-nav-links" aria-label="Primary navigation">
+              <a
+                className="glm-nav-link glm-nav-link--publisher"
+                href={publisherUrl}
+              >
+                Publisher login
+              </a>
+              <a className="glm-nav-link" href={consumerUrl}>
+                Log in
+              </a>
+              <a className="glm-signup" href={consumerUrl}>
+                Sign up
+              </a>
+            </nav>
+          </div>
+        </header>
+
+        <section className="glm-hero">
+          <h1 className="glm-rise">How Codex pays for knowledge.</h1>
+          <p className="glm-rise" style={{ animationDelay: "0.08s" }}>
+            Set a budget. Codex buys the sources it needs at the price each
+            publisher sets. Publishers keep the page and get paid per read.
+          </p>
+          <div
+            className="glm-hero-actions glm-rise"
+            style={{ animationDelay: "0.16s" }}
+          >
+            <a className="glm-cta" href={consumerUrl}>
+              Sign up
             </a>
-            <span className="gl-demo-flag">Demo credits · no real money</span>
-          </nav>
-        </div>
-      </header>
+          </div>
+        </section>
+
+        <section
+          aria-label="How a purchase works"
+          className="glm-steps glm-rise"
+          id="how-it-works"
+          style={{ animationDelay: "0.24s" }}
+        >
+          {steps.map((step) => (
+            <div className="glm-step" key={step.title}>
+              <strong>{step.title}</strong>
+              <small>{step.body}</small>
+            </div>
+          ))}
+        </section>
+      </div>
 
       <main>
-        <div className="gl-width">
-          <section className="gl-hero">
-            <div className="gl-hero-copy">
-              <h1 className="gl-display gl-display--hero">
-                Agents should not merely cite the web. They should fund it.
-              </h1>
-              <p className="gl-lede">
-                Galleon lets an agent inspect, purchase, and unlock a source
-                while the publisher keeps the content, customer experience, and
-                canonical URL.
+        <div className="glm-body">
+          <section className="glm-split">
+            <div className="glm-split-copy">
+              <h2>Every source Codex reads, on one statement.</h2>
+              <p>
+                Set a cap and Galleon holds to it. Each purchase records what
+                was bought, from whom, and for how much, with a link back to the
+                publisher&apos;s own page.
               </p>
-            </div>
-            <div className="gl-actions">
-              <a className="gl-button" href={consumerUrl}>
-                Open wallet
-              </a>
-              <a className="gl-button gl-button--secondary" href={publisherUrl}>
-                Publish with Galleon
+              <a className="glm-split-link" href={consumerUrl}>
+                See a wallet →
               </a>
             </div>
-          </section>
 
-          <section aria-label="Galleon purchase flow">
-            <div className="gl-card gl-passage">
-              {passage.map((node) => (
-                <div className="gl-passage-node" key={node.step}>
-                  <span>{node.step}</span>
-                  <strong>{node.label}</strong>
-                  <small>{node.caption}</small>
+            <div className="glm-card">
+              <div className="glm-statement-head">
+                <div>
+                  <span>Spent this month</span>
+                  <strong>$4.62</strong>
+                </div>
+                <span>of $25.00 budget</span>
+              </div>
+              <div className="glm-meter">
+                <span style={{ width: "18.5%" }} />
+              </div>
+              <div className="glm-statement-row glm-statement-row--head">
+                <span>Source</span>
+                <span>Amount</span>
+              </div>
+              {sampleStatement.map((entry) => (
+                <div className="glm-statement-row" key={entry.title}>
+                  <span className="glm-statement-source">
+                    {entry.title}
+                    <small>{entry.publisher}</small>
+                  </span>
+                  <span className="glm-statement-amount">{entry.amount}</span>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="gl-portals" aria-labelledby="choose-portal">
-            <h2 className="gl-section-heading" id="choose-portal">
-              Choose your side of the ledger
-            </h2>
-            <div className="gl-portal-grid">
-              <a className="gl-card gl-portal-card" href={consumerUrl}>
-                <span className="gl-portal-mark" aria-hidden="true">
-                  C
-                </span>
-                <h3>Use Galleon</h3>
-                <p>
-                  Connect your agent, set a budget, and review purchased
-                  sources.
-                </p>
-                <span className="gl-portal-action">Open wallet →</span>
-              </a>
-              <a
-                className="gl-card gl-portal-card"
-                data-gl-theme="publisher"
-                href={publisherUrl}
-              >
-                <span className="gl-portal-mark" aria-hidden="true">
-                  P
-                </span>
-                <h3>Publish with Galleon</h3>
-                <p>
-                  Register sources, set access terms, and follow every sale.
-                </p>
-                <span className="gl-portal-action">
-                  Open publisher console →
-                </span>
-              </a>
-            </div>
+          <section aria-label="How settlement works" className="glm-trust">
+            {assurances.map((item) => (
+              <div key={item.title}>
+                <strong>{item.title}</strong>
+                <p>{item.body}</p>
+              </div>
+            ))}
           </section>
         </div>
+
+        <section aria-label="For publishers" className="glm-publishers">
+          <div className="glm-publishers-inner">
+            <div className="glm-publishers-copy">
+              <h2>Writing is worth something. Charge for it.</h2>
+              <p>
+                Register a source, set what access to it costs, and follow every
+                sale as it settles. Your page, your reader, your price.
+              </p>
+              <div className="glm-publishers-actions">
+                <a className="glm-button-mint" href={publisherUrl}>
+                  Publish with Galleon
+                </a>
+                <a
+                  className="glm-button-mint glm-button-mint--quiet"
+                  href={publisherUrl}
+                >
+                  Publisher login
+                </a>
+              </div>
+            </div>
+
+            <div className="glm-card glm-card--publisher">
+              <div className="glm-sales-head">
+                <span>Gross sales, this month</span>
+                <strong>$182.40</strong>
+              </div>
+              {sampleSales.map((sale) => (
+                <div className="glm-sales-row" key={sale.title}>
+                  <span>{sale.title}</span>
+                  <span>{sale.amount}</span>
+                </div>
+              ))}
+              <div className="glm-sales-note">
+                Settled to Northline Review, 2 minutes ago
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer className="gl-footer">
-        <div className="gl-width">
-          <span>Galleon settles in demo credits. No real money moves.</span>
+      <footer className="glm-footer">
+        <div className="glm-footer-inner">
+          <div className="glm-footer-grid">
+            <div className="glm-footer-brand">
+              <span className="glm-wordmark">Galleon</span>
+              <p>
+                A payment rail between AI agents and the people who write what
+                they read.
+              </p>
+            </div>
+            <div className="glm-footer-col">
+              <span>Product</span>
+              <a href={consumerUrl}>Wallet</a>
+              <a href="#how-it-works">How it works</a>
+              <a href={blogUrl}>Sources</a>
+            </div>
+            <div className="glm-footer-col">
+              <span>Publishers</span>
+              <a href={publisherUrl}>Publisher login</a>
+              <a href={publisherUrl}>Register a source</a>
+              <a href={publisherDemoUrl}>See it on a page</a>
+            </div>
+            <div className="glm-footer-col">
+              <span>Company</span>
+              <a href="#">Terms</a>
+              <a href="#">Privacy</a>
+              <a href="#">Contact</a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

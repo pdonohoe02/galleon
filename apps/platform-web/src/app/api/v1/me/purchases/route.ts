@@ -6,7 +6,9 @@ import { galleon } from "@/lib/galleon";
 
 export async function GET() {
   try {
-    return NextResponse.json({ purchases: await galleon.getConsumerPurchases(DEMO_IDS.consumerWallet) });
+    return NextResponse.json({
+      purchases: await galleon.getConsumerPurchases(DEMO_IDS.consumerWallet),
+    });
   } catch (error) {
     return apiError(error);
   }
