@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/tsconfig.tsbuildinfo
+.pnpm-store
+.env
+.env.*
+!.env.example

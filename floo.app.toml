@@ -1,0 +1,56 @@
+# Galleon — agent-native payment rail between AI agents and publishers.
+#
+# Four services share one image (see Dockerfile); each runs a different start
+# command. publisher-demo is a SEPARATE origin on purpose: the product claim is
+# that paid source content stays on the publisher's own infrastructure.
+#
+# Secrets are never in this file. Set them with:
+#   floo env set NAME --stdin --secret --app galleon --service <service>
+
+[app]
+name = "galleon"
+
+[managed.default]
+type = "postgres"
+
+# Galleon platform: marketing landing, consumer wallet, publisher console.
+[services.web]
+type = "web"
+path = "."
+port = 8080
+ingress = "public"
+command = "exec pnpm --filter @galleon/platform-web exec next start -H 0.0.0.0 -p ${PORT:-8080}"
+migrate_command = "pnpm --filter @galleon/database db:migrate"
+dev_command = "pnpm --filter @galleon/platform-web dev"
+
+# Northline Review — the publisher demo. Registers the WebMCP tools.
+[services.publisher]
+type = "web"
+path = "."
+port = 8080
+ingress = "public"
+command = "exec pnpm --filter @galleon/publisher-demo exec next start -H 0.0.0.0 -p ${PORT:-8080}"
+dev_command = "pnpm --filter @galleon/publisher-demo dev"
+
+# Drift Signal — the unpaid publication, for contrast.
+[services.blog]
+type = "web"
+path = "."
+port = 8080
+ingress = "public"
+command = "exec pnpm --filter @galleon/mock-blog exec next start -H 0.0.0.0 -p ${PORT:-8080}"
+dev_command = "pnpm --filter @galleon/mock-blog dev"
+
+# Wallet MCP: holds wallet context, validates signed offers, issues entitlements.
+[services.mcp]
+type = "api"
+path = "."
+port = 8080
+ingress = "public"
+command = "exec node apps/galleon-mcp/dist/index.js"
+dev_command = "pnpm --filter @galleon/mcp dev"
+
+[resources]
+cpu = "1"
+memory = "1Gi"
+max_instances = 2
