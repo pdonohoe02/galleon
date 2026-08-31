@@ -53,4 +53,7 @@ dev_command = "pnpm --filter @galleon/mcp dev"
 [resources]
 cpu = "1"
 memory = "1Gi"
-max_instances = 2
+# Pinned to one instance: the ES256 signing key is still generated to a file
+# at GALLEON_SIGNING_KEY_PATH, so a second instance would mint a different key
+# and offers signed by one would fail verification on the other.
+max_instances = 1
