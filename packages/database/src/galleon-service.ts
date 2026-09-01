@@ -25,6 +25,34 @@ const SEED_TRANSACTION_ID = "00000000-0000-4000-8000-000000000009";
 const SEED_DEBIT_ID = "00000000-0000-4000-8000-000000000010";
 const SEED_CREDIT_ID = "00000000-0000-4000-8000-000000000011";
 
+// What a freshly signed-up consumer starts with. Mirrors the demo seed so the
+// first session looks the same whether you are the seeded wallet or a new user.
+const SIGNUP_GRANT_MINOR = 500;
+const SIGNUP_MAX_PER_PURCHASE_MINOR = 100;
+const SIGNUP_MAX_DAILY_SPEND_MINOR = 500;
+
+export type UserKind = "consumer" | "publisher";
+
+export type UserRecord = {
+  id: string;
+  email: string;
+  kind: UserKind;
+  /** The consumer wallet this user owns; null for publishers. */
+  wallet_id: string | null;
+};
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function isUniqueViolation(error: unknown, constraint: string): boolean {
+  return (
+    typeof error === "object" && error !== null &&
+    (error as { code?: string }).code === "23505" &&
+    (error as { constraint_name?: string }).constraint_name === constraint
+  );
+}
+
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -552,7 +580,98 @@ export function createGalleonService(
     });
   }
 
-  async function getWalletSummary(walletId = DEMO_IDS.consumerWallet) {
+  // ---- Accounts -----------------------------------------------------------
+  //
+  // Password hashing and cookie handling live in platform-web; this layer only
+  // persists users and sessions. Sessions are keyed by the SHA-256 of the
+  // cookie token, so a leaked row is not a usable credential.
+
+  async function createUser(input: { email: string; password_hash: string; kind: UserKind }): Promise<UserRecord> {
+    await ensureDemoData();
+    const email = normalizeEmail(input.email);
+    const userId = randomUUID();
+    const walletId = input.kind === "consumer" ? randomUUID() : null;
+
+    try {
+      await client.begin(async (sql) => {
+        await sql`
+          INSERT INTO users (id, email, password_hash, kind)
+          VALUES (${userId}, ${email}, ${input.password_hash}, ${input.kind})
+        `;
+        if (walletId) {
+          // A new consumer gets a funded wallet so the first session is not an
+          // empty screen. Funding is a real ledger transaction from treasury,
+          // the same shape as the demo seed, so the books stay balanced.
+          const transactionId = randomUUID();
+          await sql`
+            INSERT INTO wallets (id, owner_type, owner_user_id, publisher_id, public_ref, currency, mode)
+            VALUES (${walletId}, 'consumer', ${userId}, NULL, ${`wallet_${walletId}`}, 'USD', 'demo')
+          `;
+          await sql`
+            INSERT INTO wallet_policies (wallet_id, enabled, max_per_purchase_minor, max_daily_spend_minor)
+            VALUES (${walletId}, true, ${SIGNUP_MAX_PER_PURCHASE_MINOR}, ${SIGNUP_MAX_DAILY_SPEND_MINOR})
+          `;
+          await sql`
+            INSERT INTO ledger_transactions (id, kind, status, idempotency_key)
+            VALUES (${transactionId}, 'signup_grant', 'posted', ${`signup:${userId}`})
+          `;
+          await sql`
+            INSERT INTO ledger_entries (id, transaction_id, wallet_id, amount_minor, currency)
+            VALUES
+              (${randomUUID()}, ${transactionId}, ${DEMO_IDS.treasuryWallet}, ${-SIGNUP_GRANT_MINOR}, 'USD'),
+              (${randomUUID()}, ${transactionId}, ${walletId}, ${SIGNUP_GRANT_MINOR}, 'USD')
+          `;
+        }
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, "users_email_unique")) {
+        throw new GalleonServiceError("EMAIL_TAKEN", "An account with that email already exists.", 409);
+      }
+      throw error;
+    }
+
+    return { id: userId, email, kind: input.kind, wallet_id: walletId };
+  }
+
+  async function findUserByEmail(email: string): Promise<(UserRecord & { password_hash: string }) | null> {
+    const rows = await client<{ id: string; email: string; kind: UserKind; password_hash: string; wallet_id: string | null }[]>`
+      SELECT u.id, u.email, u.kind, u.password_hash, w.id AS wallet_id
+      FROM users u
+      LEFT JOIN wallets w ON w.owner_user_id = u.id AND w.owner_type = 'consumer'
+      WHERE u.email = ${normalizeEmail(email)}
+      LIMIT 1
+    `;
+    return rows[0] ?? null;
+  }
+
+  async function createSession(input: { user_id: string; token_hash: string; expires_at: Date }): Promise<void> {
+    await client`
+      INSERT INTO sessions (token_hash, user_id, expires_at)
+      VALUES (${input.token_hash}, ${input.user_id}, ${input.expires_at})
+    `;
+  }
+
+  async function getSessionUser(tokenHash: string): Promise<UserRecord | null> {
+    const rows = await client<{ id: string; email: string; kind: UserKind; wallet_id: string | null }[]>`
+      SELECT u.id, u.email, u.kind, w.id AS wallet_id
+      FROM sessions s
+      JOIN users u ON u.id = s.user_id
+      LEFT JOIN wallets w ON w.owner_user_id = u.id AND w.owner_type = 'consumer'
+      WHERE s.token_hash = ${tokenHash} AND s.expires_at > now()
+      LIMIT 1
+    `;
+    return rows[0] ?? null;
+  }
+
+  async function deleteSession(tokenHash: string): Promise<void> {
+    await client`DELETE FROM sessions WHERE token_hash = ${tokenHash}`;
+  }
+
+  async function deleteExpiredSessions(): Promise<void> {
+    await client`DELETE FROM sessions WHERE expires_at <= now()`;
+  }
+
+  async function getWalletSummary(walletId: string = DEMO_IDS.consumerWallet) {
     await ensureDemoData();
     const walletRows = await client<{ public_ref: string; balance_minor: number }[]>`
       SELECT w.public_ref, COALESCE(SUM(le.amount_minor), 0)::int AS balance_minor
@@ -572,7 +691,7 @@ export function createGalleonService(
     };
   }
 
-  async function getConsumerPurchases(walletId = DEMO_IDS.consumerWallet) {
+  async function getConsumerPurchases(walletId: string = DEMO_IDS.consumerWallet) {
     await ensureDemoData();
     return client<{
       purchase_id: string; title: string; publisher_name: string; canonical_url: string;
@@ -629,9 +748,15 @@ export function createGalleonService(
     assertLedgerBalanced,
     close: () => client.end(),
     createOfferPresentation,
+    createSession,
+    createUser,
+    deleteExpiredSessions,
+    deleteSession,
     ensureDemoData,
+    findUserByEmail,
     getConsumerPurchases,
     getPublisherSummary,
+    getSessionUser,
     getWalletSummary,
     purchaseOffer,
     redeemEntitlement,

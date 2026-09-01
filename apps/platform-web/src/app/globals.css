@@ -195,6 +195,133 @@ button:focus-visible {
   box-shadow: 0 0 0 3px rgba(15, 110, 90, 0.14);
 }
 
+.gl-masthead-user {
+  color: var(--gl-text-meta);
+  font-size: 13px;
+}
+
+/* ---------- Forms and buttons ----------
+   Same rules as everything else: 1px borders for definition, control radius,
+   nothing floats. */
+
+.gl-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gl-accent-strong);
+  border-radius: var(--gl-radius-control);
+  padding: 11px 20px;
+  color: #fff;
+  background: var(--gl-accent);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.gl-button:hover {
+  background: var(--gl-accent-strong);
+}
+
+.gl-button:focus-visible {
+  outline: 2px solid var(--gl-accent);
+  outline-offset: 2px;
+}
+
+.gl-button--quiet {
+  border-color: var(--gl-line-strong);
+  padding: 6px 12px;
+  color: var(--gl-text-secondary);
+  background: var(--gl-surface-raised);
+  font-size: 13px;
+}
+
+.gl-button--quiet:hover {
+  color: var(--gl-text);
+  background: var(--gl-surface-hover);
+}
+
+.gl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.gl-field-label {
+  color: var(--gl-text-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.gl-field-hint {
+  color: var(--gl-text-meta);
+  font-size: 12.5px;
+}
+
+.gl-input {
+  border: 1px solid var(--gl-line-strong);
+  border-radius: var(--gl-radius-control);
+  padding: 10px 12px;
+  color: var(--gl-text);
+  background: var(--gl-surface-raised);
+  font: inherit;
+  font-size: 15px;
+}
+
+.gl-input:focus {
+  outline: none;
+  border-color: var(--gl-accent);
+  box-shadow: 0 0 0 3px var(--gl-accent-wash);
+}
+
+.gl-form-error {
+  margin: 0;
+  padding: 11px 14px;
+  border: 1px solid #e3c2c2;
+  border-radius: var(--gl-radius);
+  color: #7a2626;
+  background: #f9e9e9;
+  font-size: 13.5px;
+}
+
+/* ---------- Auth pages ---------- */
+
+.gl-page--narrow {
+  max-width: 480px;
+}
+
+.gl-page--narrow .gl-page-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gl-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+}
+
+.gl-auth-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.gl-auth-switch {
+  color: var(--gl-text-meta);
+  font-size: 13.5px;
+}
+
+.gl-auth-switch a {
+  color: var(--gl-accent);
+  font-weight: 500;
+}
+
 /* ---------- Type ---------- */
 
 .gl-display {

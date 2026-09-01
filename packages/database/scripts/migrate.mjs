@@ -22,10 +22,9 @@
 // correct everywhere. Normalising here rather than hand-editing the generated
 // SQL means the next `drizzle-kit generate` cannot reintroduce the problem.
 //
-// Local note: if you have previously run `drizzle-kit migrate` against your
-// local database, its state lives in drizzle.__drizzle_migrations and this
-// script will not see it. Drop the local database (or that schema) once and
-// let this script own migrations from then on.
+// A local database previously migrated with `drizzle-kit migrate` is adopted
+// on first run: its drizzle.__drizzle_migrations history is copied across, so
+// nothing is re-applied.
 
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import postgres from "postgres";
@@ -50,6 +49,34 @@ try {
       hash text NOT NULL,
       created_at bigint
     )`;
+
+  // A database that was previously migrated with `drizzle-kit migrate` keeps
+  // its history in drizzle.__drizzle_migrations. On the first run here, adopt
+  // that history so already-applied migrations are not re-applied. Only ever
+  // relevant locally; on floo the drizzle schema cannot exist.
+  const [{ empty }] = await sql`
+    select not exists (select 1 from "__drizzle_migrations") as empty`;
+  if (empty) {
+    const [{ legacy }] = await sql`
+      select to_regclass('drizzle.__drizzle_migrations') is not null as legacy`;
+    if (legacy) {
+      // Adopt only rows whose hash matches a migration file in this checkout.
+      // A legacy table populated from another branch can hold a row with a
+      // later created_at than anything here; copying that verbatim would make
+      // the runner think everything is applied and skip real migrations.
+      const known = new Set(migrations.map((m) => m.hash));
+      const rows = await sql`select hash, created_at from drizzle.__drizzle_migrations order by created_at`;
+      const matched = rows.filter((row) => known.has(row.hash));
+      const skipped = rows.length - matched.length;
+      for (const row of matched) {
+        await sql`insert into "__drizzle_migrations" (hash, created_at) values (${row.hash}, ${row.created_at})`;
+      }
+      console.log(
+        `migrations: adopted ${matched.length} already-applied from drizzle.__drizzle_migrations` +
+          (skipped ? ` (ignored ${skipped} with no matching local file)` : ""),
+      );
+    }
+  }
 
   const [last] = await sql`
     select id, hash, created_at from "__drizzle_migrations"

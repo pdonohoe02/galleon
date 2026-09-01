@@ -39,6 +39,15 @@ Demo authentication is deliberately fail-closed unless `GALLEON_DEMO_AUTH=true` 
 6. Codex passes the entitlement to the publisher page's `unlock_source` tool.
 7. The publisher backend atomically redeems it with Galleon, establishes first-party access, and returns the source and canonical citation.
 
+## Accounts
+
+Consumers sign up with an email and password on the wallet host. One `users` table serves both audiences; `kind` says which surface a user signs in to, and the sign-in action refuses a publisher account on the wallet host rather than signing it in somewhere it does not belong.
+
+- Passwords are hashed with `scrypt` from `node:crypto`. The cost parameters are recorded in the stored string, so they can be raised later without invalidating existing hashes.
+- Sessions are server-side rows keyed by the SHA-256 of a random cookie token. The cookie is `HttpOnly`, `SameSite=Lax` (the sign-in redirect and the logout hop to the marketing host are top-level navigations), and `Secure` in production. Sign-out deletes the row and redirects to `GALLEON_ISSUER`, which is the marketing host in every environment.
+- A new consumer receives a wallet, a spend policy, and a starting grant posted as a balanced ledger transaction from the treasury wallet, so the books stay consistent with the demo seed.
+- `/consumer` and `/api/v1/me/*` resolve the wallet from the session. The seeded demo wallet (`DEMO_IDS.consumerWallet`) is still what the wallet MCP charges; binding MCP bearer tokens to user wallets is the next step. Publisher identity is not yet account-backed.
+
 ## Security ownership
 
 | Concern                                            | Owner            |

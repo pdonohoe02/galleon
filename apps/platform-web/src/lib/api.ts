@@ -40,3 +40,11 @@ export function unauthorized() {
     { status: 401 },
   );
 }
+
+/** For /api/v1/me/*: the caller has no signed-in session. */
+export function unauthenticated() {
+  return NextResponse.json(
+    { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in to access your wallet.", retryable: false, request_id: crypto.randomUUID() } },
+    { status: 401 },
+  );
+}

@@ -1,6 +1,10 @@
-import { DEMO_IDS, formatUsd } from "@galleon/contracts";
+import { formatUsd } from "@galleon/contracts";
+import { redirect } from "next/navigation";
 
 import { galleon } from "@/lib/galleon";
+import { getCurrentUser, revokeSession } from "@/lib/session";
+
+import { signOut } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +21,19 @@ const purchasedAtFormat = new Intl.DateTimeFormat("en-US", {
 });
 
 export default async function ConsumerDashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/consumer/sign-in");
+  if (!user.wallet_id) {
+    // A session with no consumer wallet cannot use this surface. Revoke it
+    // here rather than redirecting with it still valid, which would loop.
+    // (revoke, not end: a page render cannot modify cookies.)
+    await revokeSession();
+    redirect("/consumer/sign-in?error=wrong_surface");
+  }
+
   const [wallet, purchases] = await Promise.all([
-    galleon.getWalletSummary(DEMO_IDS.consumerWallet),
-    galleon.getConsumerPurchases(DEMO_IDS.consumerWallet),
+    galleon.getWalletSummary(user.wallet_id),
+    galleon.getConsumerPurchases(user.wallet_id),
   ]);
 
   const spentMinor = purchases.reduce(
@@ -37,7 +51,15 @@ export default async function ConsumerDashboardPage() {
             </a>
             <span className="gl-surface-chip">Wallet</span>
           </div>
-          <span className="gl-status">Wallet MCP ready</span>
+          <div className="gl-masthead-right">
+            <span className="gl-status">Wallet MCP ready</span>
+            <span className="gl-masthead-user">{user.email}</span>
+            <form action={signOut}>
+              <button className="gl-button gl-button--quiet" type="submit">
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
