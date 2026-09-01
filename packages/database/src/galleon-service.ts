@@ -605,7 +605,7 @@ export function createGalleonService(
           const transactionId = randomUUID();
           await sql`
             INSERT INTO wallets (id, owner_type, owner_user_id, publisher_id, public_ref, currency, mode)
-            VALUES (${walletId}, 'consumer', ${userId}, NULL, ${`wallet_${walletId.slice(0, 8)}`}, 'USD', 'demo')
+            VALUES (${walletId}, 'consumer', ${userId}, NULL, ${`wallet_${walletId}`}, 'USD', 'demo')
           `;
           await sql`
             INSERT INTO wallet_policies (wallet_id, enabled, max_per_purchase_minor, max_daily_spend_minor)
@@ -665,6 +665,10 @@ export function createGalleonService(
 
   async function deleteSession(tokenHash: string): Promise<void> {
     await client`DELETE FROM sessions WHERE token_hash = ${tokenHash}`;
+  }
+
+  async function deleteExpiredSessions(): Promise<void> {
+    await client`DELETE FROM sessions WHERE expires_at <= now()`;
   }
 
   async function getWalletSummary(walletId: string = DEMO_IDS.consumerWallet) {
@@ -746,6 +750,7 @@ export function createGalleonService(
     createOfferPresentation,
     createSession,
     createUser,
+    deleteExpiredSessions,
     deleteSession,
     ensureDemoData,
     findUserByEmail,

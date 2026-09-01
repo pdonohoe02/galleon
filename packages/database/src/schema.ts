@@ -71,7 +71,15 @@ export const wallets = pgTable("wallets", {
   currency: text("currency").notNull().default("USD"),
   mode: text("mode").notNull().default("demo"),
   ...timestamps,
-}, (table) => [uniqueIndex("wallets_public_ref_unique").on(table.publicRef)]);
+}, (table) => [
+  uniqueIndex("wallets_public_ref_unique").on(table.publicRef),
+  // Session lookup and sign-in both join on owner_user_id; without an index
+  // that is a sequential scan per authenticated request. Partial and unique:
+  // one consumer wallet per user, which the LIMIT 1 in those joins assumes.
+  uniqueIndex("wallets_owner_user_id_consumer_unique")
+    .on(table.ownerUserId)
+    .where(sql`${table.ownerType} = 'consumer'`),
+]);
 
 export const walletPolicies = pgTable("wallet_policies", {
   walletId: uuid("wallet_id").primaryKey().references(() => wallets.id),

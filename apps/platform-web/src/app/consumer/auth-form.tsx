@@ -18,7 +18,7 @@ const COPY: Record<Mode, { title: string; lede: string; submit: string; switchPr
     submit: "Sign in",
     switchPrompt: "New to Galleon?",
     switchLabel: "Create a wallet",
-    switchHref: "/sign-up",
+    switchHref: "/consumer/sign-up",
   },
   "sign-up": {
     title: "Create your wallet.",
@@ -26,7 +26,7 @@ const COPY: Record<Mode, { title: string; lede: string; submit: string; switchPr
     submit: "Create wallet",
     switchPrompt: "Already have a wallet?",
     switchLabel: "Sign in",
-    switchHref: "/sign-in",
+    switchHref: "/consumer/sign-in",
   },
 };
 

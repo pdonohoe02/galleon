@@ -60,12 +60,21 @@ try {
     const [{ legacy }] = await sql`
       select to_regclass('drizzle.__drizzle_migrations') is not null as legacy`;
     if (legacy) {
-      const adopted = await sql`
-        insert into "__drizzle_migrations" (hash, created_at)
-        select hash, created_at from drizzle.__drizzle_migrations
-        order by created_at
-        returning hash`;
-      console.log(`migrations: adopted ${adopted.length} already-applied from drizzle.__drizzle_migrations`);
+      // Adopt only rows whose hash matches a migration file in this checkout.
+      // A legacy table populated from another branch can hold a row with a
+      // later created_at than anything here; copying that verbatim would make
+      // the runner think everything is applied and skip real migrations.
+      const known = new Set(migrations.map((m) => m.hash));
+      const rows = await sql`select hash, created_at from drizzle.__drizzle_migrations order by created_at`;
+      const matched = rows.filter((row) => known.has(row.hash));
+      const skipped = rows.length - matched.length;
+      for (const row of matched) {
+        await sql`insert into "__drizzle_migrations" (hash, created_at) values (${row.hash}, ${row.created_at})`;
+      }
+      console.log(
+        `migrations: adopted ${matched.length} already-applied from drizzle.__drizzle_migrations` +
+          (skipped ? ` (ignored ${skipped} with no matching local file)` : ""),
+      );
     }
   }
 

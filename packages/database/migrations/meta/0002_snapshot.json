@@ -1,5 +1,5 @@
 {
-  "id": "aa14e5cd-ae77-41bb-a065-e1f9934a73ce",
+  "id": "39715310-2603-4a32-aca5-49d7f2bbbab4",
   "prevId": "25565402-b73c-44a7-b0db-662f3c28d6f3",
   "version": "7",
   "dialect": "postgresql",
@@ -1518,6 +1518,22 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "wallets_owner_user_id_consumer_unique": {
+          "name": "wallets_owner_user_id_consumer_unique",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"wallets\".\"owner_type\" = 'consumer'",
           "concurrently": false,
           "method": "btree",
           "with": {}

@@ -9,11 +9,14 @@ import { endSession, startSession } from "@/lib/session";
 
 import type { AuthError } from "./auth-copy";
 
-// The wallet host rewrites /sign-in and /sign-up onto /consumer/*, so the
-// browser-facing paths are the short ones.
-const SIGN_IN_PATH = "/sign-in";
-const SIGN_UP_PATH = "/sign-up";
-const WALLET_PATH = "/";
+// Always the /consumer-prefixed paths. The wallet host's proxy passes those
+// through untouched, and they are the only form that also works on the
+// README-documented direct /consumer fallback (no wildcard localhost) and on
+// any host that is not the wallet host. The short /sign-in form only resolves
+// where the proxy rewrites it.
+const SIGN_IN_PATH = "/consumer/sign-in";
+const SIGN_UP_PATH = "/consumer/sign-up";
+const WALLET_PATH = "/consumer";
 
 function back(path: string, error: AuthError, email: string): never {
   const params = new URLSearchParams({ error });
@@ -59,6 +62,9 @@ export async function signIn(formData: FormData): Promise<void> {
   const { email, password } = readCredentials(formData);
 
   if (!EMAIL_SHAPE.test(email)) back(SIGN_IN_PATH, "invalid_email", email);
+  // Same cap as sign-up. Without it an oversized body goes straight into
+  // scrypt on every attempt, known email or not.
+  if (password.length > PASSWORD_MAX_LENGTH) back(SIGN_IN_PATH, "bad_credentials", email);
 
   const user = await galleon.findUserByEmail(email);
   // Verify against a real hash even when the user is unknown, so response

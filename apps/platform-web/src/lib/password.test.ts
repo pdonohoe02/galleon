@@ -29,6 +29,24 @@ describe("password hashing", () => {
     await expect(verifyPassword("x", "scrypt$32768$8$1$$")).resolves.toBe(false);
   });
 
+  it("rejects out-of-range or invalid scrypt parameters without throwing", async () => {
+    const stored = await hashPassword("secret");
+    const [, , r, p, salt, key] = stored.split("$");
+    const withN = (n: string) => ["scrypt", n, r, p, salt, key].join("$");
+    // non-power-of-two N makes node's scrypt throw synchronously
+    await expect(verifyPassword("secret", withN("3"))).resolves.toBe(false);
+    await expect(verifyPassword("secret", withN("1000"))).resolves.toBe(false);
+    // Number() would accept these; the validator must not
+    await expect(verifyPassword("secret", withN("1e3"))).resolves.toBe(false);
+    await expect(verifyPassword("secret", withN("0x8000"))).resolves.toBe(false);
+    // above the cap: must be refused before any allocation is attempted
+    await expect(verifyPassword("secret", withN(String(2 ** 30)))).resolves.toBe(false);
+    // r and p bounds
+    await expect(verifyPassword("secret", ["scrypt", "32768", "0", p, salt, key].join("$"))).resolves.toBe(false);
+    await expect(verifyPassword("secret", ["scrypt", "32768", "64", p, salt, key].join("$"))).resolves.toBe(false);
+    await expect(verifyPassword("secret", ["scrypt", "32768", r, "32", salt, key].join("$"))).resolves.toBe(false);
+  });
+
   it("rejects a tampered key", async () => {
     const stored = await hashPassword("secret");
     const parts = stored.split("$");

@@ -2,7 +2,7 @@ import { formatUsd } from "@galleon/contracts";
 import { redirect } from "next/navigation";
 
 import { galleon } from "@/lib/galleon";
-import { getCurrentUser } from "@/lib/session";
+import { getCurrentUser, revokeSession } from "@/lib/session";
 
 import { signOut } from "./actions";
 
@@ -22,8 +22,14 @@ const purchasedAtFormat = new Intl.DateTimeFormat("en-US", {
 
 export default async function ConsumerDashboardPage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
-  if (!user.wallet_id) redirect("/sign-in?error=wrong_surface");
+  if (!user) redirect("/consumer/sign-in");
+  if (!user.wallet_id) {
+    // A session with no consumer wallet cannot use this surface. Revoke it
+    // here rather than redirecting with it still valid, which would loop.
+    // (revoke, not end: a page render cannot modify cookies.)
+    await revokeSession();
+    redirect("/consumer/sign-in?error=wrong_surface");
+  }
 
   const [wallet, purchases] = await Promise.all([
     galleon.getWalletSummary(user.wallet_id),

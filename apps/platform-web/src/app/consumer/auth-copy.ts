@@ -21,5 +21,8 @@ export const AUTH_ERROR_COPY: Record<AuthError, string> = {
 };
 
 export function authErrorMessage(value: string | undefined): string | null {
-  return value && value in AUTH_ERROR_COPY ? AUTH_ERROR_COPY[value as AuthError] : null;
+  // hasOwn, not `in`: the value comes from the query string, and `in` walks
+  // the prototype chain, so ?error=__proto__ would hand back an object and
+  // crash the render.
+  return value && Object.hasOwn(AUTH_ERROR_COPY, value) ? AUTH_ERROR_COPY[value as AuthError] : null;
 }
