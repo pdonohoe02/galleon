@@ -9,6 +9,10 @@
 
 [app]
 name = "galleon"
+# Migrations run DDL, which floo only permits in autonomous mode. The CLI
+# describes autonomous as the default when this is omitted, but `floo db
+# migrate` was refused with it omitted, so it is set explicitly.
+agent_mode = "autonomous"
 
 [managed.default]
 type = "postgres"
