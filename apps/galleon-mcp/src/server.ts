@@ -22,7 +22,7 @@ export function createMcpServer(galleon: GalleonService) {
     { name: "galleon-wallet", version: "0.1.0" },
     {
       instructions:
-        "Galleon uses demo credits only. First inspect a publisher page's source offer. Before calling purchase_offer, show the exact source, price, currency, and rights to the user and obtain approval. Never send wallet credentials to a publisher. Pass only the returned entitlement to the same publisher origin's unlock_source tool.",
+        "First inspect a publisher page's source offer. Before calling purchase_offer, show the exact source, price, currency, and rights to the user and obtain approval. Never send wallet credentials to a publisher. Pass only the returned entitlement to the same publisher origin's unlock_source tool.",
     },
   );
 
@@ -38,7 +38,7 @@ export function createMcpServer(galleon: GalleonService) {
       try {
         await galleon.ensureDemoData();
         const status = { name: "galleon-mcp", mode: "demo" as const, status: "ready" as const, version: "0.1.0" };
-        return { structuredContent: status, content: [{ type: "text" as const, text: "Galleon MCP, demo wallet, and ledger are ready." }] };
+        return { structuredContent: status, content: [{ type: "text" as const, text: "Galleon MCP, wallet, and ledger are ready." }] };
       } catch (error) {
         return errorResult(error);
       }
@@ -48,8 +48,8 @@ export function createMcpServer(galleon: GalleonService) {
   server.registerTool(
     "get_wallet_summary",
     {
-      title: "Get demo wallet summary",
-      description: "Read the authenticated Galleon demo wallet balance and spend policy.",
+      title: "Get wallet summary",
+      description: "Read the authenticated Galleon wallet balance and spend policy.",
       inputSchema: {},
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
@@ -58,7 +58,7 @@ export function createMcpServer(galleon: GalleonService) {
         const summary = await galleon.getWalletSummary(DEMO_IDS.consumerWallet);
         return {
           structuredContent: summary,
-          content: [{ type: "text" as const, text: `Demo wallet balance: ${summary.display_balance}.` }],
+          content: [{ type: "text" as const, text: `Wallet balance: ${summary.display_balance}.` }],
         };
       } catch (error) {
         return errorResult(error);
@@ -71,7 +71,7 @@ export function createMcpServer(galleon: GalleonService) {
     {
       title: "Purchase a signed publisher offer",
       description:
-        "Purchase the exact, short-lived Galleon offer after the user approves its price and rights. Charges demo credits and returns a publisher-scoped entitlement.",
+        "Purchase the exact, short-lived Galleon offer after the user approves its price and rights. Charges credits and returns a publisher-scoped entitlement.",
       inputSchema: {
         offer_token: z.string().min(100).max(8192).describe("Signed offer token returned by inspect_source."),
         idempotency_key: z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/).describe("A unique retry-safe key for this approved purchase."),
@@ -89,7 +89,7 @@ export function createMcpServer(galleon: GalleonService) {
           content: [{
             type: "text" as const,
             text: purchase.payment.charged
-              ? `Purchased “${purchase.source.title}” for ${purchase.payment.display_price}. Remaining demo balance: ${purchase.wallet.display_balance}.`
+              ? `Purchased “${purchase.source.title}” for ${purchase.payment.display_price}. Remaining balance: ${purchase.wallet.display_balance}.`
               : `“${purchase.source.title}” was already purchased. A fresh entitlement was issued without another charge.`,
           }],
         };

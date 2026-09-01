@@ -377,7 +377,7 @@ export function createGalleonService(
       const currentBalance = balanceRows[0]?.balance ?? 0;
       const charged = !existing;
       if (charged && currentBalance < offer.amount_minor) {
-        throw new GalleonServiceError("INSUFFICIENT_FUNDS", "The demo wallet has insufficient credits.", 402);
+        throw new GalleonServiceError("INSUFFICIENT_FUNDS", "The wallet has insufficient credits.", 402);
       }
 
       if (charged) {

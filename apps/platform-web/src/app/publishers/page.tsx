@@ -38,7 +38,7 @@ export default async function PublisherDashboardPage() {
               Price the source. Keep the relationship.
             </h1>
             <div className="gl-balance">
-              <span className="gl-balance-label">Gross demo sales</span>
+              <span className="gl-balance-label">Gross sales</span>
               <span className="gl-balance-value">
                 {summary.display_balance}
               </span>
@@ -106,12 +106,6 @@ export default async function PublisherDashboardPage() {
           </section>
         </div>
       </main>
-
-      <footer className="gl-footer gl-footer--solid">
-        <div className="gl-width">
-          <span>Galleon settles in demo credits. No real money moves.</span>
-        </div>
-      </footer>
     </div>
   );
 }
