@@ -23,6 +23,28 @@ export const systemMetadata = pgTable("system_metadata", {
   value: text("value").notNull(),
 });
 
+// Accounts. One table for both audiences; `kind` says which surface the user
+// signs in to. Consumers own a wallet, publishers will own a publisher record.
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  kind: text("kind").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("users_email_unique").on(table.email),
+  check("users_kind_check", sql`${table.kind} IN ('consumer', 'publisher')`),
+]);
+
+// Server-side sessions. The cookie carries a random token; only its SHA-256
+// is stored, so a database read cannot be replayed as a session.
+export const sessions = pgTable("sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamps.createdAt,
+}, (table) => [index("sessions_user_id_idx").on(table.userId)]);
+
 export const publishers = pgTable("publishers", {
   id: uuid("id").primaryKey(),
   name: text("name").notNull(),
@@ -41,6 +63,9 @@ export const publisherOrigins = pgTable("publisher_origins", {
 export const wallets = pgTable("wallets", {
   id: uuid("id").primaryKey(),
   ownerType: text("owner_type").notNull(),
+  // Set for consumer wallets that belong to a signed-up user. The seeded demo
+  // wallet and the publisher/treasury wallets leave it null.
+  ownerUserId: uuid("owner_user_id").references(() => users.id),
   publisherId: uuid("publisher_id").references(() => publishers.id),
   publicRef: text("public_ref").notNull(),
   currency: text("currency").notNull().default("USD"),

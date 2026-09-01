@@ -22,10 +22,9 @@
 // correct everywhere. Normalising here rather than hand-editing the generated
 // SQL means the next `drizzle-kit generate` cannot reintroduce the problem.
 //
-// Local note: if you have previously run `drizzle-kit migrate` against your
-// local database, its state lives in drizzle.__drizzle_migrations and this
-// script will not see it. Drop the local database (or that schema) once and
-// let this script own migrations from then on.
+// A local database previously migrated with `drizzle-kit migrate` is adopted
+// on first run: its drizzle.__drizzle_migrations history is copied across, so
+// nothing is re-applied.
 
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import postgres from "postgres";
@@ -50,6 +49,25 @@ try {
       hash text NOT NULL,
       created_at bigint
     )`;
+
+  // A database that was previously migrated with `drizzle-kit migrate` keeps
+  // its history in drizzle.__drizzle_migrations. On the first run here, adopt
+  // that history so already-applied migrations are not re-applied. Only ever
+  // relevant locally; on floo the drizzle schema cannot exist.
+  const [{ empty }] = await sql`
+    select not exists (select 1 from "__drizzle_migrations") as empty`;
+  if (empty) {
+    const [{ legacy }] = await sql`
+      select to_regclass('drizzle.__drizzle_migrations') is not null as legacy`;
+    if (legacy) {
+      const adopted = await sql`
+        insert into "__drizzle_migrations" (hash, created_at)
+        select hash, created_at from drizzle.__drizzle_migrations
+        order by created_at
+        returning hash`;
+      console.log(`migrations: adopted ${adopted.length} already-applied from drizzle.__drizzle_migrations`);
+    }
+  }
 
   const [last] = await sql`
     select id, hash, created_at from "__drizzle_migrations"
