@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Galleon">
+  <!-- Ice Field favicon: navy ink G on the pale ice surface.
+       Colours are the design-system tokens gl-text (#0a2540) and
+       gl-surface (#e6eff6); the corner radius matches gl-radius-card (6px).
+       The G is a path rather than a text element because favicons cannot
+       reliably load Schibsted Grotesk, and a system-font fallback would
+       differ per platform. -->
+  <rect width="32" height="32" rx="6" fill="#e6eff6"/>
+  <path d="M22.89 10.22 A9 9 0 1 0 24.92 17.20 L17.60 17.20"
+        fill="none"
+        stroke="#0a2540"
+        stroke-width="3.5"
+        stroke-linecap="butt"
+        stroke-linejoin="round"/>
+</svg>
