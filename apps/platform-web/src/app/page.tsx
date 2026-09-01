@@ -1,5 +1,11 @@
 import { KnowledgeGraph } from "./knowledge-graph";
 
+// The links below come from the environment. Without this the page is
+// prerendered during `next build` inside the image, where none of the
+// GALLEON_*_URL vars exist, so the localhost fallbacks get baked in and
+// cached for a year. consumer/ and publishers/ already opt out the same way.
+export const dynamic = "force-dynamic";
+
 const consumerUrl =
   process.env.GALLEON_CONSUMER_URL ?? "http://app.galleon.localhost:3000";
 const publisherUrl =
