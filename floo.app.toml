@@ -13,7 +13,20 @@ name = "galleon"
 [managed.default]
 type = "postgres"
 
-# Galleon platform: marketing landing, consumer wallet, publisher console.
+# Galleon platform: one Next app (platform-web) serving three surfaces.
+#
+# src/lib/surface.ts picks the surface from the incoming Host header alone:
+# a host equal to GALLEON_CONSUMER_HOST renders the wallet, one equal to
+# GALLEON_PUBLISHER_HOST renders the publisher console, and anything else
+# falls through to the marketing landing page.
+#
+# Locally that is one process on three *.galleon.localhost hosts. floo gives
+# one hostname per service, so the same app is deployed three times below —
+# identical image and command, distinguished only by the hostname each one
+# receives. GALLEON_CONSUMER_HOST/GALLEON_PUBLISHER_HOST are set app-wide and
+# still resolve correctly, because each instance only ever sees its own host.
+
+# Marketing landing. Matches neither host var, so it falls through to marketing.
 [services.web]
 type = "web"
 path = "."
@@ -22,6 +35,22 @@ ingress = "public"
 command = "exec pnpm --filter @galleon/platform-web exec next start -H 0.0.0.0 -p ${PORT:-8080}"
 migrate_command = "pnpm --filter @galleon/database db:migrate"
 dev_command = "pnpm --filter @galleon/platform-web dev"
+
+# Consumer wallet. Its hostname is set as GALLEON_CONSUMER_HOST.
+[services.wallet]
+type = "web"
+path = "."
+port = 8080
+ingress = "public"
+command = "exec pnpm --filter @galleon/platform-web exec next start -H 0.0.0.0 -p ${PORT:-8080}"
+
+# Publisher console. Its hostname is set as GALLEON_PUBLISHER_HOST.
+[services.console]
+type = "web"
+path = "."
+port = 8080
+ingress = "public"
+command = "exec pnpm --filter @galleon/platform-web exec next start -H 0.0.0.0 -p ${PORT:-8080}"
 
 # Northline Review — the publisher demo. Registers the WebMCP tools.
 [services.publisher]
