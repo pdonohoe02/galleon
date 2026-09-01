@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import "./globals.css";
+// Broadsheet Galleon design system, scoped under .galleon-ds so it styles only
+// the dashboards (which opt in with that wrapper class) and never the marketing
+// site. Imported after globals so its scoped rules win on the dashboard routes.
+import "./ds/galleon-ui.css";
 
 export const metadata: Metadata = {
   description:

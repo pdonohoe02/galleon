@@ -11,6 +11,8 @@ type Props = {
   error?: string;
 };
 
+const marketingUrl = process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200";
+
 const COPY: Record<Mode, { title: string; lede: string; submit: string; switchPrompt: string; switchLabel: string; switchHref: string }> = {
   "sign-in": {
     title: "Sign in to your wallet.",
@@ -36,74 +38,90 @@ export function AuthForm({ mode, action, email = "", error }: Props) {
   const isSignUp = mode === "sign-up";
 
   return (
-    <div className="gl-shell">
-      <header className="gl-masthead gl-masthead--solid">
-        <div className="gl-width">
-          <div className="gl-masthead-left">
-            <a className="gl-wordmark" href={process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200"}>
-              Galleon
-            </a>
-            <span className="gl-surface-chip">Wallet</span>
+    <div className="galleon-ds">
+      <div className="gl-shell">
+        <header className="gl-masthead">
+          <a className="gl-wordmark" href={marketingUrl}>
+            Galleon
+          </a>
+          <div className="gl-masthead__aside">
+            <span className="gl-status">
+              <span className="gl-status__dot gl-status__dot--muted" />
+              Consumer wallet
+            </span>
+          </div>
+        </header>
+
+        <div className="gl-page-header">
+          <div className="gl-page-header__main">
+            <p className="gl-eyebrow gl-eyebrow--accent">Consumer wallet</p>
+            <h1 className="gl-display gl-display--3">{copy.title}</h1>
+            <p className="gl-lede gl-lede--body">{copy.lede}</p>
           </div>
         </div>
-      </header>
 
-      <main>
-        <div className="gl-page gl-page--narrow">
-          <section className="gl-page-head">
-            <h1 className="gl-display">{copy.title}</h1>
-            <p className="gl-lede">{copy.lede}</p>
-          </section>
-
-          <section className="gl-flush">
-            <form className="gl-auth-form" action={action} noValidate>
-              {message ? (
-                <p className="gl-form-error" role="alert">
-                  {message}
-                </p>
-              ) : null}
-
-              <label className="gl-field">
-                <span className="gl-field-label">Email</span>
-                <input
-                  className="gl-input"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  defaultValue={email}
-                  required
-                  autoFocus={!email}
-                />
-              </label>
-
-              <label className="gl-field">
-                <span className="gl-field-label">Password</span>
-                <input
-                  className="gl-input"
-                  type="password"
-                  name="password"
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  minLength={isSignUp ? PASSWORD_MIN_LENGTH : undefined}
-                  required
-                  autoFocus={Boolean(email)}
-                />
-                {isSignUp ? (
-                  <span className="gl-field-hint">At least {PASSWORD_MIN_LENGTH} characters.</span>
-                ) : null}
-              </label>
-
-              <div className="gl-auth-actions">
-                <button className="gl-button" type="submit">
-                  {copy.submit}
-                </button>
-                <span className="gl-auth-switch">
-                  {copy.switchPrompt} <a href={copy.switchHref}>{copy.switchLabel}</a>
-                </span>
+        <section className="gl-section">
+          <form action={action} noValidate style={{ maxWidth: "32rem" }}>
+            {message ? (
+              <div className="gl-notice gl-notice--critical" role="alert">
+                <div className="gl-notice__copy">
+                  <span>{message}</span>
+                </div>
               </div>
-            </form>
-          </section>
-        </div>
-      </main>
+            ) : null}
+
+            <div className="gl-field" style={{ marginBlockStart: message ? "var(--gl-space-5)" : undefined }}>
+              <label className="gl-field__label" htmlFor="email">
+                Email
+              </label>
+              <input
+                className="gl-input"
+                id="email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                defaultValue={email}
+                required
+                autoFocus={!email}
+              />
+            </div>
+
+            <div className="gl-field">
+              <label className="gl-field__label" htmlFor="password">
+                Password
+              </label>
+              <input
+                className="gl-input"
+                id="password"
+                type="password"
+                name="password"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                minLength={isSignUp ? PASSWORD_MIN_LENGTH : undefined}
+                required
+                autoFocus={Boolean(email)}
+              />
+              {isSignUp ? (
+                <p className="gl-field__hint">At least {PASSWORD_MIN_LENGTH} characters.</p>
+              ) : null}
+            </div>
+
+            <div
+              className="gl-actions"
+              style={{ alignItems: "center", justifyContent: "space-between", marginBlockStart: "var(--gl-space-6)" }}
+            >
+              <button className="gl-button gl-button--primary" type="submit">
+                {copy.submit}
+              </button>
+              <span className="gl-lede gl-lede--small" style={{ margin: 0 }}>
+                {copy.switchPrompt}{" "}
+                <a href={copy.switchHref} style={{ color: "var(--gl-accent)", fontWeight: 600 }}>
+                  {copy.switchLabel}
+                </a>
+              </span>
+            </div>
+          </form>
+        </section>
+      </div>
     </div>
   );
 }

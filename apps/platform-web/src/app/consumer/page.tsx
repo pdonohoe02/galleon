@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 const mcpEndpoint = process.env.GALLEON_MCP_URL ?? "http://127.0.0.1:3100/mcp";
 const publisherDemoUrl =
   process.env.GALLEON_PUBLISHER_DEMO_URL ?? "http://127.0.0.1:3001";
+const marketingUrl = process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200";
 
 const purchasedAtFormat = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -42,103 +43,135 @@ export default async function ConsumerDashboardPage() {
   );
 
   return (
-    <div className="gl-shell">
-      <header className="gl-masthead gl-masthead--solid">
-        <div className="gl-width">
-          <div className="gl-masthead-left">
-            <a className="gl-wordmark" href="/">
-              Galleon
+    // Broadsheet Galleon design system. `.galleon-ds` scopes the theme;
+    // consumer surface keeps the default ocean accent (no data-gl-theme).
+    <div className="galleon-ds">
+      <div className="gl-shell">
+        <header className="gl-masthead">
+          <a className="gl-wordmark" href={marketingUrl}>
+            Galleon
+          </a>
+          <nav className="gl-masthead__nav">
+            <a href="/consumer" aria-current="page">
+              Wallet
             </a>
-            <span className="gl-surface-chip">Wallet</span>
-          </div>
-          <div className="gl-masthead-right">
-            <span className="gl-status">Wallet MCP ready</span>
-            <span className="gl-masthead-user">{user.email}</span>
+            <a href={publisherDemoUrl}>Sources</a>
+          </nav>
+          <div className="gl-masthead__aside">
+            <span className="gl-status">
+              <span className="gl-status__dot gl-status__dot--ready" />
+              Wallet MCP connected
+            </span>
+            <span>{user.email}</span>
             <form action={signOut}>
-              <button className="gl-button gl-button--quiet" type="submit">
+              <button className="gl-button gl-button--quiet gl-button--sm" type="submit">
                 Sign out
               </button>
             </form>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main>
-        <div className="gl-page">
-          <section className="gl-page-head">
-            <h1 className="gl-display">Your sources, paid precisely.</h1>
+        <div className="gl-page-header">
+          <div className="gl-page-header__main">
+            <p className="gl-eyebrow gl-eyebrow--accent">Consumer wallet</p>
+            <h1 className="gl-display gl-display--3">
+              Your sources, paid precisely.
+            </h1>
+          </div>
+          <div className="gl-page-header__aside">
             <div className="gl-balance">
-              <span className="gl-balance-label">Balance</span>
-              <span className="gl-balance-value">{wallet.display_balance}</span>
-            </div>
-          </section>
-
-          {/* One surface: MCP panel, section heading, and ledger sit flush
-              inside it, divided by rules. */}
-          <section className="gl-flush">
-            <div className="gl-flush-panel">
-              <div className="gl-detail-copy">
-                <div className="gl-detail-title">
-                  <h2>Galleon wallet MCP</h2>
-                  <span className="gl-tag">Ready</span>
-                </div>
-                <p>
-                  The MCP holds the trusted wallet context, validates signed
-                  publisher offers, and returns publisher-scoped entitlements.
-                </p>
-              </div>
-              <div className="gl-inline-value-group">
-                <span className="gl-inline-label">Endpoint</span>
-                <span className="gl-inline-value">{mcpEndpoint}</span>
-              </div>
-            </div>
-
-            <div className="gl-flush-head">
-              <h2 className="gl-section-heading">Recent purchases</h2>
-              <span className="gl-meta">
-                {purchases.length}{" "}
-                {purchases.length === 1 ? "purchase" : "purchases"} ·{" "}
-                {formatUsd(spentMinor)} spent
+              <span className="gl-balance__label">Balance</span>
+              <span className="gl-balance__value gl-amount gl-amount--hero">
+                {wallet.display_balance}
               </span>
+              <span className="gl-balance__caption">Non-withdrawable credits</span>
             </div>
-
-            <div className="gl-row gl-row--head gl-purchases-row">
-              <span>Source</span>
-              <span>Publisher</span>
-              <span>Purchased</span>
-              <span className="gl-align-end">Amount</span>
-            </div>
-
-            {purchases.length === 0 ? (
-              <div className="gl-empty">
-                <span className="gl-empty-mark" aria-hidden="true">
-                  0
-                </span>
-                <p>Your first unlocked source will appear here.</p>
-                <a href={publisherDemoUrl}>Browse Northline Review →</a>
-              </div>
-            ) : (
-              purchases.map((purchase) => (
-                <div
-                  className="gl-row gl-purchases-row"
-                  key={purchase.purchase_id}
-                >
-                  <span className="gl-cell-title">{purchase.title}</span>
-                  <span className="gl-cell-meta">
-                    {purchase.publisher_name}
-                  </span>
-                  <span className="gl-cell-meta gl-tabular">
-                    {purchasedAtFormat.format(new Date(purchase.purchased_at))}
-                  </span>
-                  <span className="gl-cell-amount">
-                    {formatUsd(purchase.amount_minor)}
-                  </span>
-                </div>
-              ))
-            )}
-          </section>
+          </div>
         </div>
-      </main>
+
+        <section className="gl-section">
+          <div className="gl-section__head">
+            <p className="gl-eyebrow gl-eyebrow--soft">Wallet MCP</p>
+            <span className="gl-section__aside">
+              <span className="gl-tag gl-tag--positive">Ready</span>
+            </span>
+          </div>
+          <p className="gl-lede gl-lede--body">
+            The MCP holds the trusted wallet context, validates signed publisher
+            offers, and returns publisher-scoped entitlements. Point your agent at
+            the endpoint below.
+          </p>
+          <div className="gl-snippet gl-snippet--inline">
+            <span className="gl-snippet__label">MCP endpoint</span>
+            <div className="gl-snippet__row">
+              <span className="gl-snippet__value">{mcpEndpoint}</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="gl-section">
+          <div className="gl-section__head">
+            <p className="gl-eyebrow gl-eyebrow--soft">Purchases</p>
+            <span className="gl-section__aside">
+              {purchases.length}{" "}
+              {purchases.length === 1 ? "purchase" : "purchases"} ·{" "}
+              {formatUsd(spentMinor)} spent
+            </span>
+          </div>
+
+          {purchases.length === 0 ? (
+            <div className="gl-empty">
+              <span className="gl-empty__figure" aria-hidden="true">
+                0
+              </span>
+              <div className="gl-empty__copy">
+                <p>Your first unlocked source will appear here.</p>
+                <a className="gl-button gl-button--secondary gl-button--sm" href={publisherDemoUrl}>
+                  Browse Northline Review
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="gl-ledger">
+              <table className="gl-ledger__table">
+                <caption className="gl-ledger__caption">
+                  Every source this wallet has unlocked
+                </caption>
+                <thead>
+                  <tr>
+                    <th className="gl-ledger__cell--start gl-ledger__cell--grow">
+                      Source
+                    </th>
+                    <th className="gl-ledger__cell--start">Publisher</th>
+                    <th className="gl-ledger__cell--start">Purchased</th>
+                    <th className="gl-ledger__cell--end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.map((purchase) => (
+                    <tr key={purchase.purchase_id}>
+                      <td className="gl-ledger__cell--grow">
+                        <span className="gl-ledger__link">{purchase.title}</span>
+                      </td>
+                      <td>{purchase.publisher_name}</td>
+                      <td>
+                        {purchasedAtFormat.format(
+                          new Date(purchase.purchased_at),
+                        )}
+                      </td>
+                      <td className="gl-ledger__cell--end">
+                        <span className="gl-amount gl-amount--sm">
+                          {formatUsd(purchase.amount_minor)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
