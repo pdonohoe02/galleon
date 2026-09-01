@@ -24,6 +24,9 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Static assets must never be rewritten onto a surface, or the wallet and
+// console hosts serve /consumer/icon.svg (a 404) instead of the icon.
+// icon.svg is the App Router favicon convention; favicon.ico is the legacy one.
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };
