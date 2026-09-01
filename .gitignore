@@ -9,6 +9,9 @@ dist/
 coverage/
 *.tsbuildinfo
 
+# Per-developer Claude Code instructions (CLAUDE.md is shared; .local is not)
+CLAUDE.local.md
+
 # Local environment and secrets
 .env
 .env.local
