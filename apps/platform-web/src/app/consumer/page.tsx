@@ -46,11 +46,8 @@ export default async function ConsumerDashboardPage() {
           <section className="gl-page-head">
             <h1 className="gl-display">Your sources, paid precisely.</h1>
             <div className="gl-balance">
-              <span className="gl-balance-label">Demo balance</span>
+              <span className="gl-balance-label">Balance</span>
               <span className="gl-balance-value">{wallet.display_balance}</span>
-              <span className="gl-balance-caption">
-                Non-withdrawable credits
-              </span>
             </div>
           </section>
 
@@ -120,12 +117,6 @@ export default async function ConsumerDashboardPage() {
           </section>
         </div>
       </main>
-
-      <footer className="gl-footer gl-footer--solid">
-        <div className="gl-width">
-          <span>Galleon settles in demo credits. No real money moves.</span>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -3,7 +3,7 @@
    ledger. No monospace anywhere: figures use tabular sans.
 
    Two structural rules from design review:
-   - Radius tops out at 6px. Only the demo pill and status dots go rounder.
+   - Radius tops out at 6px. Only the status dots go rounder.
    - Nothing floats. Definition comes from a 1px border, not elevation.
      A dashboard region is ONE bordered surface with flush sections inside,
      not a grid of tiles. */
@@ -178,27 +178,6 @@ button:focus-visible {
   font-weight: 500;
 }
 
-.gl-demo-flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid var(--gl-line-strong);
-  border-radius: var(--gl-radius-pill);
-  padding: 6px 12px;
-  color: var(--gl-text-secondary);
-  background: var(--gl-surface-sunken);
-  font-size: 12.5px;
-  font-weight: 500;
-}
-
-.gl-demo-flag::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--gl-accent);
-}
-
 .gl-status {
   display: inline-flex;
   align-items: center;
@@ -214,23 +193,6 @@ button:focus-visible {
   border-radius: 50%;
   background: var(--gl-positive);
   box-shadow: 0 0 0 3px rgba(15, 110, 90, 0.14);
-}
-
-.gl-footer {
-  border-top: 1px solid var(--gl-line);
-}
-
-.gl-footer--solid {
-  border-top-color: var(--gl-line-strong);
-}
-
-.gl-footer .gl-width {
-  padding-block: 22px;
-}
-
-.gl-footer span {
-  color: var(--gl-text-meta);
-  font-size: 13px;
 }
 
 /* ---------- Type ---------- */
