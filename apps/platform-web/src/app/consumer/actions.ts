@@ -17,6 +17,9 @@ import type { AuthError } from "./auth-copy";
 const SIGN_IN_PATH = "/consumer/sign-in";
 const SIGN_UP_PATH = "/consumer/sign-up";
 const WALLET_PATH = "/consumer";
+// New consumers land in the onboarding wizard (deposit → connect agent); the
+// dashboard shows a "finish setup" banner until they complete or skip it.
+const ONBOARDING_PATH = "/consumer/onboarding";
 
 function back(path: string, error: AuthError, email: string): never {
   const params = new URLSearchParams({ error });
@@ -55,7 +58,7 @@ export async function signUp(formData: FormData): Promise<void> {
   }
 
   await startSession(userId);
-  redirect(WALLET_PATH);
+  redirect(ONBOARDING_PATH);
 }
 
 export async function signIn(formData: FormData): Promise<void> {

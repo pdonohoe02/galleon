@@ -5,6 +5,7 @@ import { galleon } from "@/lib/galleon";
 import { getCurrentUser, revokeSession } from "@/lib/session";
 
 import { signOut } from "./actions";
+import { McpSetup } from "./mcp-setup";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,20 @@ export default async function ConsumerDashboardPage() {
           </div>
         </header>
 
+        {!user.onboarded ? (
+          <div className="gl-notice" role="status" style={{ marginBlockEnd: "var(--gl-space-6)" }}>
+            <div className="gl-notice__copy">
+              <span>
+                <strong>Finish setting up your wallet.</strong> Add test credits
+                and connect your agent to start buying sources.
+              </span>
+            </div>
+            <a className="gl-button gl-button--primary gl-button--sm" href="/consumer/onboarding">
+              Finish setup
+            </a>
+          </div>
+        ) : null}
+
         <div className="gl-page-header">
           <div className="gl-page-header__main">
             <p className="gl-eyebrow gl-eyebrow--accent">Consumer wallet</p>
@@ -97,16 +112,15 @@ export default async function ConsumerDashboardPage() {
             </span>
           </div>
           <p className="gl-lede gl-lede--body">
-            The MCP holds the trusted wallet context, validates signed publisher
-            offers, and returns publisher-scoped entitlements. Point your agent at
-            the endpoint below.
+            The MCP holds this wallet&apos;s context, validates signed publisher
+            offers, and returns publisher-scoped entitlements. Generate a token
+            and drop the block into Codex&apos;s{" "}
+            <span className="gl-input--mono" style={{ fontSize: "0.9em" }}>
+              ~/.codex/config.toml
+            </span>
+            .
           </p>
-          <div className="gl-snippet gl-snippet--inline">
-            <span className="gl-snippet__label">MCP endpoint</span>
-            <div className="gl-snippet__row">
-              <span className="gl-snippet__value">{mcpEndpoint}</span>
-            </div>
-          </div>
+          <McpSetup endpoint={mcpEndpoint} compact />
         </section>
 
         <section className="gl-section">

@@ -25,11 +25,15 @@ const SEED_TRANSACTION_ID = "00000000-0000-4000-8000-000000000009";
 const SEED_DEBIT_ID = "00000000-0000-4000-8000-000000000010";
 const SEED_CREDIT_ID = "00000000-0000-4000-8000-000000000011";
 
-// What a freshly signed-up consumer starts with. Mirrors the demo seed so the
-// first session looks the same whether you are the seeded wallet or a new user.
-const SIGNUP_GRANT_MINOR = 500;
+// A new consumer wallet's spend policy. The starting balance is no longer
+// granted at sign-up: the onboarding wizard lets the user choose how much to
+// deposit (see depositToWallet), so a fresh wallet begins empty.
 const SIGNUP_MAX_PER_PURCHASE_MINOR = 100;
 const SIGNUP_MAX_DAILY_SPEND_MINOR = 500;
+
+// Bounds for an onboarding / top-up deposit of test credits, in minor units.
+const DEPOSIT_MIN_MINOR = 100; // $1
+const DEPOSIT_MAX_MINOR = 10_000; // $100
 
 export type UserKind = "consumer" | "publisher";
 
@@ -39,6 +43,8 @@ export type UserRecord = {
   kind: UserKind;
   /** The consumer wallet this user owns; null for publishers. */
   wallet_id: string | null;
+  /** False until the consumer finishes or skips the onboarding wizard. */
+  onboarded: boolean;
 };
 
 function normalizeEmail(email: string): string {
@@ -599,10 +605,9 @@ export function createGalleonService(
           VALUES (${userId}, ${email}, ${input.password_hash}, ${input.kind})
         `;
         if (walletId) {
-          // A new consumer gets a funded wallet so the first session is not an
-          // empty screen. Funding is a real ledger transaction from treasury,
-          // the same shape as the demo seed, so the books stay balanced.
-          const transactionId = randomUUID();
+          // The wallet starts empty and enabled. The onboarding wizard funds it
+          // with the user's chosen deposit (depositToWallet), so we create the
+          // wallet and its spend policy here but post no opening grant.
           await sql`
             INSERT INTO wallets (id, owner_type, owner_user_id, publisher_id, public_ref, currency, mode)
             VALUES (${walletId}, 'consumer', ${userId}, NULL, ${`wallet_${walletId}`}, 'USD', 'demo')
@@ -610,16 +615,6 @@ export function createGalleonService(
           await sql`
             INSERT INTO wallet_policies (wallet_id, enabled, max_per_purchase_minor, max_daily_spend_minor)
             VALUES (${walletId}, true, ${SIGNUP_MAX_PER_PURCHASE_MINOR}, ${SIGNUP_MAX_DAILY_SPEND_MINOR})
-          `;
-          await sql`
-            INSERT INTO ledger_transactions (id, kind, status, idempotency_key)
-            VALUES (${transactionId}, 'signup_grant', 'posted', ${`signup:${userId}`})
-          `;
-          await sql`
-            INSERT INTO ledger_entries (id, transaction_id, wallet_id, amount_minor, currency)
-            VALUES
-              (${randomUUID()}, ${transactionId}, ${DEMO_IDS.treasuryWallet}, ${-SIGNUP_GRANT_MINOR}, 'USD'),
-              (${randomUUID()}, ${transactionId}, ${walletId}, ${SIGNUP_GRANT_MINOR}, 'USD')
           `;
         }
       });
@@ -630,12 +625,102 @@ export function createGalleonService(
       throw error;
     }
 
-    return { id: userId, email, kind: input.kind, wallet_id: walletId };
+    return { id: userId, email, kind: input.kind, wallet_id: walletId, onboarded: false };
+  }
+
+  /**
+   * Fund a wallet with test credits from the treasury. Same double-entry shape
+   * as the demo seed, so the books stay balanced. `idempotencyKey` makes a
+   * retry (a double-submitted onboarding form, say) return the same result
+   * instead of funding twice. Returns the wallet's new balance.
+   */
+  async function depositToWallet(input: {
+    walletId: string;
+    amountMinor: number;
+    idempotencyKey: string;
+  }): Promise<{ balance_minor: number; display_balance: string }> {
+    await ensureDemoData();
+    if (!Number.isInteger(input.amountMinor) || input.amountMinor < DEPOSIT_MIN_MINOR || input.amountMinor > DEPOSIT_MAX_MINOR) {
+      throw new GalleonServiceError(
+        "DEPOSIT_INVALID",
+        `A deposit must be a whole number of cents between ${DEPOSIT_MIN_MINOR} and ${DEPOSIT_MAX_MINOR}.`,
+      );
+    }
+
+    return client.begin(async (sql) => {
+      const wallets = await sql<{ id: string }[]>`SELECT id FROM wallets WHERE id = ${input.walletId} FOR UPDATE`;
+      if (!wallets[0]) throw new GalleonServiceError("WALLET_NOT_FOUND", "The wallet does not exist.", 404);
+
+      const existing = await sql<{ id: string }[]>`
+        SELECT id FROM ledger_transactions WHERE idempotency_key = ${`deposit:${input.idempotencyKey}`}
+      `;
+      if (!existing[0]) {
+        const transactionId = randomUUID();
+        await sql`
+          INSERT INTO ledger_transactions (id, kind, status, idempotency_key)
+          VALUES (${transactionId}, 'deposit', 'posted', ${`deposit:${input.idempotencyKey}`})
+        `;
+        await sql`
+          INSERT INTO ledger_entries (id, transaction_id, wallet_id, amount_minor, currency)
+          VALUES
+            (${randomUUID()}, ${transactionId}, ${DEMO_IDS.treasuryWallet}, ${-input.amountMinor}, 'USD'),
+            (${randomUUID()}, ${transactionId}, ${input.walletId}, ${input.amountMinor}, 'USD')
+        `;
+      }
+
+      const balanceRows = await sql<{ balance: number }[]>`
+        SELECT COALESCE(SUM(le.amount_minor), 0)::int AS balance
+        FROM ledger_entries le JOIN ledger_transactions lt ON lt.id = le.transaction_id
+        WHERE le.wallet_id = ${input.walletId} AND lt.status = 'posted'
+      `;
+      const balanceMinor = balanceRows[0]?.balance ?? 0;
+      return { balance_minor: balanceMinor, display_balance: formatUsd(balanceMinor) };
+    });
+  }
+
+  /** Mark the user's onboarding wizard finished (or skipped). Idempotent. */
+  async function markOnboarded(userId: string): Promise<void> {
+    await client`UPDATE users SET onboarded_at = now() WHERE id = ${userId} AND onboarded_at IS NULL`;
+  }
+
+  /**
+   * Issue a fresh wallet MCP bearer token for a user, replacing any existing
+   * one. The raw token is returned to show the user once; only its hash is
+   * stored. Prefixed so it is recognisable in a config file.
+   */
+  async function issueMcpToken(userId: string): Promise<{ token: string }> {
+    const token = `gln_${randomBytes(32).toString("base64url")}`;
+    await client.begin(async (sql) => {
+      await sql`DELETE FROM mcp_tokens WHERE user_id = ${userId}`;
+      await sql`INSERT INTO mcp_tokens (token_hash, user_id) VALUES (${sha256(token)}, ${userId})`;
+    });
+    return { token };
+  }
+
+  /**
+   * Resolve a raw MCP bearer token to its owning consumer, or null. Updates
+   * last_used_at as a liveness signal. The MCP server calls this to bind a
+   * request to the caller's own wallet instead of the shared demo wallet.
+   */
+  async function findUserByMcpToken(rawToken: string): Promise<UserRecord | null> {
+    const rows = await client<{ id: string; email: string; kind: UserKind; wallet_id: string | null; onboarded: boolean }[]>`
+      WITH touched AS (
+        UPDATE mcp_tokens SET last_used_at = now()
+        WHERE token_hash = ${sha256(rawToken)}
+        RETURNING user_id
+      )
+      SELECT u.id, u.email, u.kind, w.id AS wallet_id, (u.onboarded_at IS NOT NULL) AS onboarded
+      FROM touched t
+      JOIN users u ON u.id = t.user_id
+      LEFT JOIN wallets w ON w.owner_user_id = u.id AND w.owner_type = 'consumer'
+      LIMIT 1
+    `;
+    return rows[0] ?? null;
   }
 
   async function findUserByEmail(email: string): Promise<(UserRecord & { password_hash: string }) | null> {
-    const rows = await client<{ id: string; email: string; kind: UserKind; password_hash: string; wallet_id: string | null }[]>`
-      SELECT u.id, u.email, u.kind, u.password_hash, w.id AS wallet_id
+    const rows = await client<{ id: string; email: string; kind: UserKind; password_hash: string; wallet_id: string | null; onboarded: boolean }[]>`
+      SELECT u.id, u.email, u.kind, u.password_hash, w.id AS wallet_id, (u.onboarded_at IS NOT NULL) AS onboarded
       FROM users u
       LEFT JOIN wallets w ON w.owner_user_id = u.id AND w.owner_type = 'consumer'
       WHERE u.email = ${normalizeEmail(email)}
@@ -652,8 +737,8 @@ export function createGalleonService(
   }
 
   async function getSessionUser(tokenHash: string): Promise<UserRecord | null> {
-    const rows = await client<{ id: string; email: string; kind: UserKind; wallet_id: string | null }[]>`
-      SELECT u.id, u.email, u.kind, w.id AS wallet_id
+    const rows = await client<{ id: string; email: string; kind: UserKind; wallet_id: string | null; onboarded: boolean }[]>`
+      SELECT u.id, u.email, u.kind, w.id AS wallet_id, (u.onboarded_at IS NOT NULL) AS onboarded
       FROM sessions s
       JOIN users u ON u.id = s.user_id
       LEFT JOIN wallets w ON w.owner_user_id = u.id AND w.owner_type = 'consumer'
@@ -752,12 +837,16 @@ export function createGalleonService(
     createUser,
     deleteExpiredSessions,
     deleteSession,
+    depositToWallet,
     ensureDemoData,
     findUserByEmail,
+    findUserByMcpToken,
     getConsumerPurchases,
     getPublisherSummary,
     getSessionUser,
     getWalletSummary,
+    issueMcpToken,
+    markOnboarded,
     purchaseOffer,
     redeemEntitlement,
   };

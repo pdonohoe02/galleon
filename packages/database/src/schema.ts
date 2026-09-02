@@ -30,11 +30,26 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   passwordHash: text("password_hash").notNull(),
   kind: text("kind").notNull(),
+  // Set when the consumer finishes (or skips) the post-sign-up onboarding
+  // wizard. Null means setup is unfinished, which the dashboard surfaces as a
+  // "finish setting up" banner.
+  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   ...timestamps,
 }, (table) => [
   uniqueIndex("users_email_unique").on(table.email),
   check("users_kind_check", sql`${table.kind} IN ('consumer', 'publisher')`),
 ]);
+
+// Per-user bearer tokens for the wallet MCP. The token is shown to the user
+// once at issue time; only its SHA-256 is stored, so a database read cannot be
+// replayed as a credential. One active token per user: issuing a new one
+// replaces the old (the unique index enforces it, the service deletes first).
+export const mcpTokens = pgTable("mcp_tokens", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  createdAt: timestamps.createdAt,
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+}, (table) => [uniqueIndex("mcp_tokens_user_id_unique").on(table.userId)]);
 
 // Server-side sessions. The cookie carries a random token; only its SHA-256
 // is stored, so a database read cannot be replayed as a session.

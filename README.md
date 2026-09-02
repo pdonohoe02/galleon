@@ -41,11 +41,25 @@ Local services:
 
 The platform also exposes `/consumer` and `/publishers` as direct local fallbacks if wildcard localhost hostnames are unavailable.
 
-Set `GALLEON_DEMO_AUTH=true`, replace every `replace-with-*` value in `.env`,
-and send the configured bearer token when connecting Codex to the local MCP.
-The publisher API and signing key are server-only; they are never sent to the
-publisher page. For a stable production-mode local run after building, use
-`pnpm start`.
+Connecting Codex to the wallet MCP uses a bearer token, and there are two
+kinds. A **per-user token**, generated from the wallet onboarding screen (or
+the dashboard's Wallet MCP section), binds the agent to that user's own wallet
+and spend limits — this is the normal path and needs no `.env` change. The
+shared **demo token** (`GALLEON_DEMO_AUTH=true` plus a `GALLEON_DEMO_BEARER_TOKEN`
+value in `.env`) maps to the seeded demo wallet, for a quick local run without
+signing up. Either way, add the token to Codex's `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.galleon]
+url = "http://127.0.0.1:3100/mcp"
+bearer_token = "gln_…"            # per-user token, or the demo token
+experimental_use_rmcp_client = true
+```
+
+Balances are test credits only — no real money moves and nothing is
+withdrawable. The publisher API and signing key are server-only; they are never
+sent to the publisher page. For a stable production-mode local run after
+building, use `pnpm start`.
 
 ## Quality checks
 

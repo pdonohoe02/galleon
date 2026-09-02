@@ -17,7 +17,7 @@ function errorResult(error: unknown) {
   };
 }
 
-export function createMcpServer(galleon: GalleonService) {
+export function createMcpServer(galleon: GalleonService, walletId: string = DEMO_IDS.consumerWallet) {
   const server = new McpServer(
     { name: "galleon-wallet", version: "0.1.0" },
     {
@@ -55,7 +55,7 @@ export function createMcpServer(galleon: GalleonService) {
     },
     async () => {
       try {
-        const summary = await galleon.getWalletSummary(DEMO_IDS.consumerWallet);
+        const summary = await galleon.getWalletSummary(walletId);
         return {
           structuredContent: summary,
           content: [{ type: "text" as const, text: `Wallet balance: ${summary.display_balance}.` }],
@@ -83,7 +83,7 @@ export function createMcpServer(galleon: GalleonService) {
     async (rawInput) => {
       try {
         const input = purchaseOfferInputSchema.parse(rawInput);
-        const purchase = await galleon.purchaseOffer(DEMO_IDS.consumerWallet, input);
+        const purchase = await galleon.purchaseOffer(walletId, input);
         return {
           structuredContent: purchase,
           content: [{
