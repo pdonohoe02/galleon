@@ -1,3 +1,5 @@
+import { Button, Field, Input, Notice, Wordmark } from "@galleon/ui";
+
 import { PASSWORD_MIN_LENGTH } from "@/lib/password";
 
 import { authErrorMessage } from "./auth-copy";
@@ -24,7 +26,7 @@ const COPY: Record<Mode, { title: string; lede: string; submit: string; switchPr
   },
   "sign-up": {
     title: "Create your wallet.",
-    lede: "Starts with $5.00 of credits so your agent can buy its first source today.",
+    lede: "Set a starting balance of test credits, then point your agent at it.",
     submit: "Create wallet",
     switchPrompt: "Already have a wallet?",
     switchLabel: "Sign in",
@@ -38,90 +40,73 @@ export function AuthForm({ mode, action, email = "", error }: Props) {
   const isSignUp = mode === "sign-up";
 
   return (
-    <div className="galleon-ds">
-      <div className="gl-shell">
-        <header className="gl-masthead">
-          <a className="gl-wordmark" href={marketingUrl}>
-            Galleon
-          </a>
-          <div className="gl-masthead__aside">
-            <span className="gl-status">
-              <span className="gl-status__dot gl-status__dot--muted" />
-              Consumer wallet
-            </span>
-          </div>
-        </header>
-
-        <div className="gl-page-header">
-          <div className="gl-page-header__main">
-            <p className="gl-eyebrow gl-eyebrow--accent">Consumer wallet</p>
-            <h1 className="gl-display gl-display--3">{copy.title}</h1>
-            <p className="gl-lede gl-lede--body">{copy.lede}</p>
-          </div>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--gl-surface)" }}>
+      <header className="gl-masthead">
+        <div className="gl-width" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBlock: 20 }}>
+          <Wordmark href={marketingUrl} />
+          <span className="gl-surface-chip">Wallet</span>
         </div>
+      </header>
 
-        <section className="gl-section">
-          <form action={action} noValidate style={{ maxWidth: "32rem" }}>
-            {message ? (
-              <div className="gl-notice gl-notice--critical" role="alert">
-                <div className="gl-notice__copy">
+      <main style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "72px 24px" }}>
+        <section className="gl-panel" style={{ width: "100%", maxWidth: "27rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--gl-space, 18px)", padding: "28px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <h1 style={{ margin: 0, fontSize: 26, fontWeight: 600, letterSpacing: "-0.03em", color: "var(--gl-text)" }}>
+                {copy.title}
+              </h1>
+              <p style={{ margin: 0, color: "var(--gl-text-muted)", fontSize: 15, lineHeight: 1.5 }}>{copy.lede}</p>
+            </div>
+
+            <form action={action} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {message ? (
+                <Notice tone="critical" role="alert">
                   <span>{message}</span>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="gl-field" style={{ marginBlockStart: message ? "var(--gl-space-5)" : undefined }}>
-              <label className="gl-field__label" htmlFor="email">
-                Email
-              </label>
-              <input
-                className="gl-input"
-                id="email"
-                type="email"
-                name="email"
-                autoComplete="email"
-                defaultValue={email}
-                required
-                autoFocus={!email}
-              />
-            </div>
-
-            <div className="gl-field">
-              <label className="gl-field__label" htmlFor="password">
-                Password
-              </label>
-              <input
-                className="gl-input"
-                id="password"
-                type="password"
-                name="password"
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                minLength={isSignUp ? PASSWORD_MIN_LENGTH : undefined}
-                required
-                autoFocus={Boolean(email)}
-              />
-              {isSignUp ? (
-                <p className="gl-field__hint">At least {PASSWORD_MIN_LENGTH} characters.</p>
+                </Notice>
               ) : null}
-            </div>
 
-            <div
-              className="gl-actions"
-              style={{ alignItems: "center", justifyContent: "space-between", marginBlockStart: "var(--gl-space-6)" }}
-            >
-              <button className="gl-button gl-button--primary" type="submit">
+              <Field label="Email" htmlFor="email">
+                <Input
+                  id="email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  defaultValue={email}
+                  required
+                  autoFocus={!email}
+                />
+              </Field>
+
+              <Field
+                label="Password"
+                htmlFor="password"
+                hint={isSignUp ? `At least ${PASSWORD_MIN_LENGTH} characters.` : undefined}
+              >
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  minLength={isSignUp ? PASSWORD_MIN_LENGTH : undefined}
+                  required
+                  autoFocus={Boolean(email)}
+                />
+              </Field>
+
+              <Button variant="primary" type="submit" block>
                 {copy.submit}
-              </button>
-              <span className="gl-lede gl-lede--small" style={{ margin: 0 }}>
-                {copy.switchPrompt}{" "}
-                <a href={copy.switchHref} style={{ color: "var(--gl-accent)", fontWeight: 600 }}>
-                  {copy.switchLabel}
-                </a>
-              </span>
-            </div>
-          </form>
+              </Button>
+            </form>
+
+            <p style={{ margin: 0, color: "var(--gl-text-soft)", fontSize: 14 }}>
+              {copy.switchPrompt}{" "}
+              <a href={copy.switchHref} style={{ fontWeight: 500 }}>
+                {copy.switchLabel}
+              </a>
+            </p>
+          </div>
         </section>
-      </div>
+      </main>
     </div>
   );
 }

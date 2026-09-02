@@ -1,34 +1,54 @@
 import { formatUsd } from "@galleon/contracts";
+import {
+  AppSidebar,
+  BarChart,
+  Button,
+  Canvas,
+  DataRow,
+  DataTable,
+  EmptyState,
+  Metric,
+  MetricStrip,
+  Notice,
+  PanelHead,
+  Segmented,
+  TableFooterBar,
+  TopBar,
+} from "@galleon/ui";
 import { redirect } from "next/navigation";
 
 import { galleon } from "@/lib/galleon";
 import { getCurrentUser, revokeSession } from "@/lib/session";
 
 import { signOut } from "./actions";
-import { McpSetup } from "./mcp-setup";
+import { AddCredits } from "./add-credits";
+import { iconAgents, iconOverview, iconSettings, iconSources, iconSpending } from "./nav-icons";
 
 export const dynamic = "force-dynamic";
 
 const mcpEndpoint = process.env.GALLEON_MCP_URL ?? "http://127.0.0.1:3100/mcp";
-const publisherDemoUrl =
-  process.env.GALLEON_PUBLISHER_DEMO_URL ?? "http://127.0.0.1:3001";
+const publisherDemoUrl = process.env.GALLEON_PUBLISHER_DEMO_URL ?? "http://127.0.0.1:3001";
 const marketingUrl = process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200";
 
-const purchasedAtFormat = new Intl.DateTimeFormat("en-US", {
+const stampFormat = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
   month: "short",
-  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
 });
+const dayFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
+const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+
+const DAY_MS = 86_400_000;
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
 
 export default async function ConsumerDashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/consumer/sign-in");
   if (!user.wallet_id) {
-    // A session with no consumer wallet cannot use this surface. Revoke it
-    // here rather than redirecting with it still valid, which would loop.
-    // (revoke, not end: a page render cannot modify cookies.)
     await revokeSession();
     redirect("/consumer/sign-in?error=wrong_surface");
   }
@@ -38,153 +58,197 @@ export default async function ConsumerDashboardPage() {
     galleon.getConsumerPurchases(user.wallet_id),
   ]);
 
-  const spentMinor = purchases.reduce(
-    (total, purchase) => total + purchase.amount_minor,
-    0,
-  );
+  // Metrics from real ledger rows.
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const sevenStart = todayStart - 6 * DAY_MS;
+  let monthSpent = 0;
+  let todaySpent = 0;
+  let last7Count = 0;
+  let highest = 0;
+  let total = 0;
+  const publishers = new Set<string>();
+  const buckets = new Array<number>(30).fill(0);
+  for (const p of purchases) {
+    const t = new Date(p.purchased_at).getTime();
+    total += p.amount_minor;
+    if (p.amount_minor > highest) highest = p.amount_minor;
+    if (t >= monthStart) {
+      monthSpent += p.amount_minor;
+      publishers.add(p.publisher_name);
+    }
+    if (t >= todayStart) todaySpent += p.amount_minor;
+    if (t >= sevenStart) last7Count += 1;
+    const diff = Math.floor((todayStart - startOfDay(new Date(p.purchased_at))) / DAY_MS);
+    if (diff >= 0 && diff < 30) buckets[29 - diff] += p.amount_minor;
+  }
+  const count = purchases.length;
+  const average = count > 0 ? Math.round(total / count) : 0;
+  const cap = wallet.policy?.max_daily_spend_minor ?? 0;
+  const capPct = cap > 0 ? (todaySpent / cap) * 100 : 0;
+
+  // Daily-spend chart in dollars, with a few x-axis date labels.
+  const chartValues = buckets.map((m) => m / 100);
+  const peakIndex = chartValues.reduce((best, v, i) => (v > chartValues[best] ? i : best), 0);
+  const labelAt = (i: number, anchor?: string) => {
+    const d = new Date(todayStart - (29 - i) * DAY_MS);
+    return { at: i, text: dayFormat.format(d), anchor };
+  };
+  const chartLabels = [labelAt(0), labelAt(9), labelAt(19), labelAt(29, "end")];
+  const peakStamp =
+    count > 0 && chartValues[peakIndex] > 0
+      ? `Peak ${formatUsd(buckets[peakIndex])} · ${dayFormat.format(new Date(todayStart - (29 - peakIndex) * DAY_MS))}`
+      : "No spend yet";
+
+  const navItems = [
+    { key: "overview", label: "Overview", icon: iconOverview, active: true, href: "/consumer" },
+    { key: "spending", label: "Spending", icon: iconSpending, href: "/consumer" },
+    { key: "sources", label: "Sources", icon: iconSources, href: publisherDemoUrl },
+    { key: "agents", label: "Agents", icon: iconAgents, href: "/consumer/onboarding?step=mcp" },
+    { key: "settings", label: "Settings", icon: iconSettings, href: "/consumer/onboarding" },
+  ];
+  const initials = user.email.slice(0, 2).toUpperCase();
 
   return (
-    // Broadsheet Galleon design system. `.galleon-ds` scopes the theme;
-    // consumer surface keeps the default ocean accent (no data-gl-theme).
-    <div className="galleon-ds">
-      <div className="gl-shell">
-        <header className="gl-masthead">
-          <a className="gl-wordmark" href={marketingUrl}>
-            Galleon
-          </a>
-          <nav className="gl-masthead__nav">
-            <a href="/consumer" aria-current="page">
-              Wallet
-            </a>
-            <a href={publisherDemoUrl}>Sources</a>
-          </nav>
-          <div className="gl-masthead__aside">
-            <span className="gl-status">
-              <span className="gl-status__dot gl-status__dot--ready" />
-              Wallet MCP connected
-            </span>
-            <span>{user.email}</span>
-            <form action={signOut}>
-              <button className="gl-button gl-button--quiet gl-button--sm" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
-        {!user.onboarded ? (
-          <div className="gl-notice" role="status" style={{ marginBlockEnd: "var(--gl-space-6)" }}>
-            <div className="gl-notice__copy">
+    <div className="gl-app">
+      <AppSidebar
+        chip="Wallet"
+        brandHref={marketingUrl}
+        items={navItems}
+        identity={{
+          initials,
+          name: user.email,
+          status: user.onboarded ? "Codex connected" : "Setup unfinished",
+          endpoint: mcpEndpoint.replace(/^https?:\/\//, ""),
+        }}
+      />
+      <div className="gl-main">
+        <TopBar
+          name="Overview"
+          context={monthLabel.format(now)}
+          actions={
+            <>
+              <Button as="a" href={publisherDemoUrl} variant="secondary" size="sm">
+                Browse sources
+              </Button>
+              <AddCredits balanceMinor={wallet.balance_minor} />
+              <form action={signOut}>
+                <Button variant="quiet" size="sm" type="submit">
+                  Sign out
+                </Button>
+              </form>
+            </>
+          }
+        />
+        <Canvas>
+          {!user.onboarded ? (
+            <Notice
+              action={
+                <Button as="a" href="/consumer/onboarding" variant="primary" size="sm">
+                  Finish setup
+                </Button>
+              }
+            >
               <span>
-                <strong>Finish setting up your wallet.</strong> Add test credits
-                and connect your agent to start buying sources.
+                <strong>Finish setting up your wallet.</strong> Add test credits and connect your agent to
+                start buying sources.
               </span>
-            </div>
-            <a className="gl-button gl-button--primary gl-button--sm" href="/consumer/onboarding">
-              Finish setup
-            </a>
-          </div>
-        ) : null}
+            </Notice>
+          ) : null}
 
-        <div className="gl-page-header">
-          <div className="gl-page-header__main">
-            <p className="gl-eyebrow gl-eyebrow--accent">Consumer wallet</p>
-            <h1 className="gl-display gl-display--3">
-              Your sources, paid precisely.
-            </h1>
-          </div>
-          <div className="gl-page-header__aside">
-            <div className="gl-balance">
-              <span className="gl-balance__label">Balance</span>
-              <span className="gl-balance__value gl-amount gl-amount--hero">
-                {wallet.display_balance}
-              </span>
-              <span className="gl-balance__caption">Non-withdrawable credits</span>
-            </div>
-          </div>
-        </div>
-
-        <section className="gl-section">
-          <div className="gl-section__head">
-            <p className="gl-eyebrow gl-eyebrow--soft">Wallet MCP</p>
-            <span className="gl-section__aside">
-              <span className="gl-tag gl-tag--positive">Ready</span>
-            </span>
-          </div>
-          <p className="gl-lede gl-lede--body">
-            The MCP holds this wallet&apos;s context, validates signed publisher
-            offers, and returns publisher-scoped entitlements. Generate a token
-            and drop the block into Codex&apos;s{" "}
-            <span className="gl-input--mono" style={{ fontSize: "0.9em" }}>
-              ~/.codex/config.toml
-            </span>
-            .
-          </p>
-          <McpSetup endpoint={mcpEndpoint} compact />
-        </section>
-
-        <section className="gl-section">
-          <div className="gl-section__head">
-            <p className="gl-eyebrow gl-eyebrow--soft">Purchases</p>
-            <span className="gl-section__aside">
-              {purchases.length}{" "}
-              {purchases.length === 1 ? "purchase" : "purchases"} ·{" "}
-              {formatUsd(spentMinor)} spent
-            </span>
-          </div>
-
-          {purchases.length === 0 ? (
-            <div className="gl-empty">
-              <span className="gl-empty__figure" aria-hidden="true">
-                0
-              </span>
-              <div className="gl-empty__copy">
-                <p>Your first unlocked source will appear here.</p>
-                <a className="gl-button gl-button--secondary gl-button--sm" href={publisherDemoUrl}>
-                  Browse Northline Review
-                </a>
+          <MetricStrip columns="1.35fr 1fr 1fr 1fr">
+            <Metric lead label="Available balance" figure={wallet.display_balance}>
+              <div className="gl-budget">
+                <div className="gl-budget-track">
+                  <div
+                    className="gl-budget-fill"
+                    style={{ width: `${Math.max(0, Math.min(100, capPct))}%` }}
+                  />
+                </div>
+                <span className="gl-budget-label">
+                  {cap > 0
+                    ? `${formatUsd(todaySpent)} of ${formatUsd(cap)} daily cap used`
+                    : "No daily cap set"}
+                </span>
               </div>
+            </Metric>
+            <Metric
+              label="Spent this month"
+              figure={formatUsd(monthSpent)}
+              sub={`Across ${publishers.size} ${publishers.size === 1 ? "publisher" : "publishers"}`}
+            />
+            <Metric
+              label="Sources bought"
+              figure={String(count)}
+              sub={`${last7Count} in the last 7 days`}
+            />
+            <Metric
+              label="Average per source"
+              figure={formatUsd(average)}
+              sub={highest > 0 ? `Highest ${formatUsd(highest)}` : "—"}
+            />
+          </MetricStrip>
+
+          <section className="gl-panel">
+            <PanelHead title="Daily spend" count="Last 30 days" note={peakStamp} />
+            <div className="gl-panel-body">
+              <BarChart
+                values={chartValues}
+                peakIndex={peakIndex}
+                labels={chartLabels}
+                format={(n: number) => formatUsd(Math.round(n * 100))}
+              />
             </div>
-          ) : (
-            <div className="gl-ledger">
-              <table className="gl-ledger__table">
-                <caption className="gl-ledger__caption">
-                  Every source this wallet has unlocked
-                </caption>
-                <thead>
-                  <tr>
-                    <th className="gl-ledger__cell--start gl-ledger__cell--grow">
-                      Source
-                    </th>
-                    <th className="gl-ledger__cell--start">Publisher</th>
-                    <th className="gl-ledger__cell--start">Purchased</th>
-                    <th className="gl-ledger__cell--end">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {purchases.map((purchase) => (
-                    <tr key={purchase.purchase_id}>
-                      <td className="gl-ledger__cell--grow">
-                        <span className="gl-ledger__link">{purchase.title}</span>
-                      </td>
-                      <td>{purchase.publisher_name}</td>
-                      <td>
-                        {purchasedAtFormat.format(
-                          new Date(purchase.purchased_at),
-                        )}
-                      </td>
-                      <td className="gl-ledger__cell--end">
-                        <span className="gl-amount gl-amount--sm">
-                          {formatUsd(purchase.amount_minor)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+          </section>
+
+          <DataTable columns="minmax(220px,1fr) 148px 96px 128px 84px" minWidth={760}>
+            <PanelHead
+              title="Spending history"
+              count={`${count} ${count === 1 ? "purchase" : "purchases"} · ${formatUsd(total)}`}
+              aside={
+                <Segmented
+                  items={[{ label: "All", active: true }, { label: "This week" }, { label: "By publisher" }]}
+                />
+              }
+            />
+            <DataRow head>
+              <span className="gl-dc-head">Source</span>
+              <span className="gl-dc-head">Publisher</span>
+              <span className="gl-dc-head">Agent</span>
+              <span className="gl-dc-head">Purchased</span>
+              <span className="gl-dc-head gl-dc-head--end">Amount</span>
+            </DataRow>
+            {count === 0 ? (
+              <EmptyState
+                action={
+                  <Button as="a" href={publisherDemoUrl} variant="secondary" size="sm">
+                    Browse Northline Review
+                  </Button>
+                }
+              >
+                Your first unlocked source will appear here.
+              </EmptyState>
+            ) : (
+              <>
+                {purchases.map((p) => (
+                  <DataRow key={p.purchase_id}>
+                    <span className="gl-dc-title">{p.title}</span>
+                    <span className="gl-dc-meta">{p.publisher_name}</span>
+                    <span className="gl-dc-meta">Codex</span>
+                    <span className="gl-dc-meta">{stampFormat.format(new Date(p.purchased_at))}</span>
+                    <span className="gl-dc-amount">{formatUsd(p.amount_minor)}</span>
+                  </DataRow>
+                ))}
+                <TableFooterBar count={`Showing ${count} of ${count}`} />
+              </>
+            )}
+          </DataTable>
+
+          <span style={{ padding: "2px 2px 8px", color: "var(--gl-text-meta)", fontSize: 12 }}>
+            Galleon settles in demo credits. No real money moves.
+          </span>
+        </Canvas>
       </div>
     </div>
   );

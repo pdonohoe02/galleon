@@ -1,11 +1,12 @@
 "use server";
 
 import { GalleonServiceError } from "@galleon/database";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { galleon } from "@/lib/galleon";
 import { hashPassword, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, verifyPassword } from "@/lib/password";
-import { endSession, startSession } from "@/lib/session";
+import { endSession, getCurrentUser, startSession } from "@/lib/session";
 
 import type { AuthError } from "./auth-copy";
 
@@ -81,6 +82,34 @@ export async function signIn(formData: FormData): Promise<void> {
 
   await startSession(user.id);
   redirect(WALLET_PATH);
+}
+
+// Amounts in minor units; the service re-validates the bounds.
+const TOPUP_MIN_MINOR = 100; // $1
+const TOPUP_MAX_MINOR = 10_000; // $100
+
+/**
+ * Top up the signed-in wallet with test credits from the dashboard "Add
+ * credits" dialog. Returns a result the client dialog can show; on success the
+ * revalidate refreshes the balance and history in place.
+ */
+export async function addCredits(amountMinor: number): Promise<{ ok: boolean; error?: string }> {
+  const user = await getCurrentUser();
+  if (!user?.wallet_id) return { ok: false, error: "not_signed_in" };
+  if (!Number.isInteger(amountMinor) || amountMinor < TOPUP_MIN_MINOR || amountMinor > TOPUP_MAX_MINOR) {
+    return { ok: false, error: "amount" };
+  }
+  try {
+    await galleon.depositToWallet({
+      walletId: user.wallet_id,
+      amountMinor,
+      idempotencyKey: `topup:${user.id}:${Date.now()}`,
+    });
+  } catch (error) {
+    return { ok: false, error: error instanceof GalleonServiceError ? error.code : "error" };
+  }
+  revalidatePath("/consumer");
+  return { ok: true };
 }
 
 export async function signOut(): Promise<void> {
