@@ -43,10 +43,10 @@ export const Cell: C<{ tone?: 'title' | 'meta' | 'amount'; tabular?: boolean }>;
 export const EmptyState: C<{ mark?: React.ReactNode; action?: React.ReactNode }>;
 
 // dashboard shell
-export interface NavItemModel { key: string; label: React.ReactNode; icon?: React.ReactNode; active?: boolean; href?: string; }
+export interface NavItemModel { key: string; label: React.ReactNode; icon?: React.ReactNode; active?: boolean; href?: string; disabled?: boolean; }
 export interface IdentityModel { initials: React.ReactNode; name: React.ReactNode; status?: React.ReactNode; statusTone?: 'ok' | 'muted'; endpoint?: React.ReactNode; }
-export const AppSidebar: C<{ chip?: React.ReactNode; items?: NavItemModel[]; identity?: IdentityModel; brandHref?: string }>;
-export const NavItem: C<{ icon?: React.ReactNode; label?: React.ReactNode; active?: boolean; href?: string }>;
+export const AppSidebar: C<{ chip?: React.ReactNode; items?: NavItemModel[]; identity?: IdentityModel; footer?: React.ReactNode; brandHref?: string }>;
+export const NavItem: C<{ icon?: React.ReactNode; label?: React.ReactNode; active?: boolean; href?: string; disabled?: boolean }>;
 export const TopBar: C<{ name?: React.ReactNode; context?: React.ReactNode; actions?: React.ReactNode }>;
 export const Canvas: C;
 export const Panel: C<{ scroll?: boolean; cols?: string; minWidth?: number | string }>;

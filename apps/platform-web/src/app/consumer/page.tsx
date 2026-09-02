@@ -1,18 +1,13 @@
 import { formatUsd } from "@galleon/contracts";
 import {
-  AppSidebar,
   BarChart,
   Button,
   Canvas,
   DataRow,
   DataTable,
   EmptyState,
-  Metric,
-  MetricStrip,
   Notice,
   PanelHead,
-  Segmented,
-  TableFooterBar,
   TopBar,
 } from "@galleon/ui";
 import { redirect } from "next/navigation";
@@ -20,15 +15,10 @@ import { redirect } from "next/navigation";
 import { galleon } from "@/lib/galleon";
 import { getCurrentUser, revokeSession } from "@/lib/session";
 
-import { signOut } from "./actions";
 import { AddCredits } from "./add-credits";
-import { iconAgents, iconOverview, iconSettings, iconSources, iconSpending } from "./nav-icons";
+import { WalletSidebar } from "./wallet-nav";
 
 export const dynamic = "force-dynamic";
-
-const mcpEndpoint = process.env.GALLEON_MCP_URL ?? "http://127.0.0.1:3100/mcp";
-const publisherDemoUrl = process.env.GALLEON_PUBLISHER_DEMO_URL ?? "http://127.0.0.1:3001";
-const marketingUrl = process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200";
 
 const stampFormat = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -60,89 +50,44 @@ export default async function ConsumerDashboardPage() {
   ]);
   const mcpStatus = mcp.connected ? "Codex connected" : mcp.has_token ? "Awaiting connection" : "Agent not connected";
 
-  // Metrics from real ledger rows.
   const now = new Date();
   const todayStart = startOfDay(now);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const sevenStart = todayStart - 6 * DAY_MS;
   let monthSpent = 0;
   let todaySpent = 0;
-  let last7Count = 0;
-  let highest = 0;
   let total = 0;
-  const publishers = new Set<string>();
   const buckets = new Array<number>(30).fill(0);
   for (const p of purchases) {
     const t = new Date(p.purchased_at).getTime();
     total += p.amount_minor;
-    if (p.amount_minor > highest) highest = p.amount_minor;
-    if (t >= monthStart) {
-      monthSpent += p.amount_minor;
-      publishers.add(p.publisher_name);
-    }
+    if (t >= monthStart) monthSpent += p.amount_minor;
     if (t >= todayStart) todaySpent += p.amount_minor;
-    if (t >= sevenStart) last7Count += 1;
     const diff = Math.floor((todayStart - startOfDay(new Date(p.purchased_at))) / DAY_MS);
     if (diff >= 0 && diff < 30) buckets[29 - diff] += p.amount_minor;
   }
   const count = purchases.length;
-  const average = count > 0 ? Math.round(total / count) : 0;
   const cap = wallet.policy?.max_daily_spend_minor ?? 0;
-  const capPct = cap > 0 ? (todaySpent / cap) * 100 : 0;
+  const capPct = cap > 0 ? Math.max(0, Math.min(100, (todaySpent / cap) * 100)) : 0;
 
-  // Daily-spend chart in dollars, with a few x-axis date labels.
   const chartValues = buckets.map((m) => m / 100);
   const peakIndex = chartValues.reduce((best, v, i) => (v > chartValues[best] ? i : best), 0);
-  const labelAt = (i: number, anchor?: string) => {
-    const d = new Date(todayStart - (29 - i) * DAY_MS);
-    return { at: i, text: dayFormat.format(d), anchor };
-  };
+  const labelAt = (i: number, anchor?: string) => ({
+    at: i,
+    text: dayFormat.format(new Date(todayStart - (29 - i) * DAY_MS)),
+    anchor,
+  });
   const chartLabels = [labelAt(0), labelAt(9), labelAt(19), labelAt(29, "end")];
-  const peakStamp =
-    count > 0 && chartValues[peakIndex] > 0
-      ? `Peak ${formatUsd(buckets[peakIndex])} · ${dayFormat.format(new Date(todayStart - (29 - peakIndex) * DAY_MS))}`
-      : "No spend yet";
 
-  const navItems = [
-    { key: "overview", label: "Overview", icon: iconOverview, active: true, href: "/consumer" },
-    { key: "spending", label: "Spending", icon: iconSpending, href: "/consumer" },
-    { key: "sources", label: "Sources", icon: iconSources, href: publisherDemoUrl },
-    { key: "agents", label: "Agents", icon: iconAgents, href: "/consumer/onboarding?step=mcp" },
-    { key: "settings", label: "Settings", icon: iconSettings, href: "/consumer/onboarding" },
-  ];
-  const initials = user.email.slice(0, 2).toUpperCase();
+  const recent = purchases.slice(0, 5);
 
   return (
     <div className="gl-app">
-      <AppSidebar
-        chip="Wallet"
-        brandHref={marketingUrl}
-        items={navItems}
-        identity={{
-          initials,
-          name: user.email,
-          status: mcpStatus,
-          statusTone: mcp.connected ? "ok" : "muted",
-          endpoint: mcpEndpoint.replace(/^https?:\/\//, ""),
-        }}
-      />
+      <WalletSidebar active="overview" email={user.email} connected={mcp.connected} mcpStatus={mcpStatus} />
       <div className="gl-main">
         <TopBar
           name="Overview"
           context={monthLabel.format(now)}
-          actions={
-            <>
-              <Button as="a" href={publisherDemoUrl} variant="secondary" size="sm">
-                Browse sources
-              </Button>
-              <AddCredits balanceMinor={wallet.balance_minor} />
-              <form action={signOut}>
-                <Button variant="quiet" size="sm" type="submit">
-                  Sign out
-                </Button>
-              </form>
-            </>
-          }
+          actions={<AddCredits balanceMinor={wallet.balance_minor} />}
         />
         <Canvas>
           {!user.onboarded ? (
@@ -160,41 +105,26 @@ export default async function ConsumerDashboardPage() {
             </Notice>
           ) : null}
 
-          <MetricStrip columns="1.35fr 1fr 1fr 1fr">
-            <Metric lead label="Available balance" figure={wallet.display_balance}>
-              <div className="gl-budget">
-                <div className="gl-budget-track">
-                  <div
-                    className="gl-budget-fill"
-                    style={{ width: `${Math.max(0, Math.min(100, capPct))}%` }}
-                  />
-                </div>
-                <span className="gl-budget-label">
-                  {cap > 0
-                    ? `${formatUsd(todaySpent)} of ${formatUsd(cap)} daily cap used`
-                    : "No daily cap set"}
-                </span>
+          {/* Balance */}
+          <section className="gl-panel" style={{ padding: "22px 26px", display: "flex", flexDirection: "column", gap: 12 }}>
+            <span className="gl-metric-label">Available balance</span>
+            <span style={{ fontSize: 44, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+              {wallet.display_balance}
+            </span>
+            <div className="gl-budget" style={{ maxWidth: 420 }}>
+              <div className="gl-budget-track">
+                <div className="gl-budget-fill" style={{ width: `${capPct}%` }} />
               </div>
-            </Metric>
-            <Metric
-              label="Spent this month"
-              figure={formatUsd(monthSpent)}
-              sub={`Across ${publishers.size} ${publishers.size === 1 ? "publisher" : "publishers"}`}
-            />
-            <Metric
-              label="Sources bought"
-              figure={String(count)}
-              sub={`${last7Count} in the last 7 days`}
-            />
-            <Metric
-              label="Average per source"
-              figure={formatUsd(average)}
-              sub={highest > 0 ? `Highest ${formatUsd(highest)}` : "—"}
-            />
-          </MetricStrip>
+              <span className="gl-budget-label">
+                {cap > 0 ? `${formatUsd(todaySpent)} of ${formatUsd(cap)} daily cap used` : "No daily cap set"}
+                {count > 0 ? ` · ${formatUsd(monthSpent)} spent this month` : ""}
+              </span>
+            </div>
+          </section>
 
+          {/* Usage graph */}
           <section className="gl-panel">
-            <PanelHead title="Daily spend" count="Last 30 days" note={peakStamp} />
+            <PanelHead title="Usage" count="Last 30 days" note={count > 0 ? `${formatUsd(total)} total` : "No spend yet"} />
             <div className="gl-panel-body">
               <BarChart
                 values={chartValues}
@@ -205,46 +135,38 @@ export default async function ConsumerDashboardPage() {
             </div>
           </section>
 
-          <DataTable columns="minmax(220px,1fr) 148px 96px 128px 84px" minWidth={760}>
+          {/* Recent purchases */}
+          <DataTable columns="minmax(220px,1fr) 160px 132px 90px" minWidth={640}>
             <PanelHead
-              title="Spending history"
-              count={`${count} ${count === 1 ? "purchase" : "purchases"} · ${formatUsd(total)}`}
-              aside={
-                <Segmented
-                  items={[{ label: "All", active: true }, { label: "This week" }, { label: "By publisher" }]}
-                />
-              }
+              title="Recent purchases"
+              count={`${count} ${count === 1 ? "purchase" : "purchases"}`}
+              aside={count > 0 ? <a href="/consumer/spending" style={{ fontSize: 12.5, fontWeight: 500 }}>View all</a> : undefined}
             />
             <DataRow head>
               <span className="gl-dc-head">Source</span>
               <span className="gl-dc-head">Publisher</span>
-              <span className="gl-dc-head">Agent</span>
               <span className="gl-dc-head">Purchased</span>
               <span className="gl-dc-head gl-dc-head--end">Amount</span>
             </DataRow>
             {count === 0 ? (
               <EmptyState
                 action={
-                  <Button as="a" href={publisherDemoUrl} variant="secondary" size="sm">
-                    Browse Northline Review
+                  <Button as="a" href="/consumer/sources" variant="secondary" size="sm">
+                    Browse sources
                   </Button>
                 }
               >
                 Your first unlocked source will appear here.
               </EmptyState>
             ) : (
-              <>
-                {purchases.map((p) => (
-                  <DataRow key={p.purchase_id}>
-                    <span className="gl-dc-title">{p.title}</span>
-                    <span className="gl-dc-meta">{p.publisher_name}</span>
-                    <span className="gl-dc-meta">Codex</span>
-                    <span className="gl-dc-meta">{stampFormat.format(new Date(p.purchased_at))}</span>
-                    <span className="gl-dc-amount">{formatUsd(p.amount_minor)}</span>
-                  </DataRow>
-                ))}
-                <TableFooterBar count={`Showing ${count} of ${count}`} />
-              </>
+              recent.map((p) => (
+                <DataRow key={p.purchase_id}>
+                  <span className="gl-dc-title">{p.title}</span>
+                  <span className="gl-dc-meta">{p.publisher_name}</span>
+                  <span className="gl-dc-meta">{stampFormat.format(new Date(p.purchased_at))}</span>
+                  <span className="gl-dc-amount">{formatUsd(p.amount_minor)}</span>
+                </DataRow>
+              ))
             )}
           </DataTable>
 

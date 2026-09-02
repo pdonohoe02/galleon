@@ -57,10 +57,10 @@ export default async function PublisherDashboardPage() {
 
   const navItems = [
     { key: "overview", label: "Overview", icon: iconOverview, active: true, href: "/publishers" },
-    { key: "revenue", label: "Revenue", icon: iconSpending, href: "/publishers" },
-    { key: "articles", label: "Articles", icon: iconSources, href: "/publishers" },
-    { key: "payouts", label: "Payouts", icon: iconAgents, href: "/publishers" },
-    { key: "settings", label: "Settings", icon: iconSettings, href: "/publishers" },
+    { key: "revenue", label: "Revenue", icon: iconSpending, href: "#revenue" },
+    { key: "articles", label: "Articles", icon: iconSources, href: "#sources" },
+    { key: "payouts", label: "Payouts", icon: iconAgents, disabled: true },
+    { key: "settings", label: "Settings", icon: iconSettings, disabled: true },
   ];
 
   return (
@@ -97,7 +97,7 @@ export default async function PublisherDashboardPage() {
             <Metric label="Live sources" figure={String(summary.resources.length)} sub="Priced on this origin" />
           </MetricStrip>
 
-          <section className="gl-panel">
+          <section className="gl-panel" id="revenue" style={{ scrollMarginTop: 68 }}>
             <PanelHead
               title="Revenue"
               count="Last 30 days"
@@ -108,7 +108,7 @@ export default async function PublisherDashboardPage() {
             </div>
           </section>
 
-          <DataTable columns="minmax(220px,1fr) 120px 96px 84px" minWidth={640}>
+          <DataTable columns="minmax(220px,1fr) 120px 96px 84px" minWidth={640} id="sources" style={{ scrollMarginTop: 68 }}>
             <PanelHead
               title="Sources & offers"
               count={`${summary.resources.length} ${summary.resources.length === 1 ? "source" : "sources"} · ${summary.purchase_count} sold`}

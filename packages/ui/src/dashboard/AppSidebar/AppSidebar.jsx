@@ -3,7 +3,7 @@ import { cx } from '../../cx.js';
 import { NavItem } from './NavItem.jsx';
 
 /** 216px dashboard sidebar: brand, nav, and an identity footer. */
-export function AppSidebar({ chip, items = [], identity, brandHref = '/', className, ...rest }) {
+export function AppSidebar({ chip, items = [], identity, footer, brandHref = '/', className, ...rest }) {
   return React.createElement('aside', { className: cx('gl-sidebar', className), ...rest },
     React.createElement('div', { className: 'gl-sidebar-top' },
       React.createElement('a', { className: 'gl-sidebar-brand', href: brandHref },
@@ -12,7 +12,7 @@ export function AppSidebar({ chip, items = [], identity, brandHref = '/', classN
         chip && React.createElement('span', { className: 'gl-brand-chip' }, chip)
       ),
       React.createElement('nav', { className: 'gl-nav' },
-        items.map((it) => React.createElement(NavItem, { key: it.key, icon: it.icon, label: it.label, active: it.active, href: it.href }))
+        items.map((it) => React.createElement(NavItem, { key: it.key, icon: it.icon, label: it.label, active: it.active, href: it.href, disabled: it.disabled }))
       )
     ),
     identity && React.createElement('div', { className: 'gl-sidebar-foot' },
@@ -23,7 +23,8 @@ export function AppSidebar({ chip, items = [], identity, brandHref = '/', classN
           identity.status && React.createElement('span', { className: cx('gl-ident-status', identity.statusTone === 'muted' && 'gl-ident-status--muted') }, identity.status)
         )
       ),
-      identity.endpoint && React.createElement('span', { className: 'gl-ident-endpoint' }, identity.endpoint)
+      identity.endpoint && React.createElement('span', { className: 'gl-ident-endpoint' }, identity.endpoint),
+      footer
     )
   );
 }

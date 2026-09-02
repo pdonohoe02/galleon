@@ -232,6 +232,9 @@ a:hover {
 .gl-nav-ico { display: inline-flex; color: #7a8fa4; }
 .gl-nav-item--active { color: var(--gl-text); background: var(--gl-surface-raised); box-shadow: 0 1px 2px rgba(10, 37, 64, 0.06); font-weight: 500; }
 .gl-nav-item--active .gl-nav-ico { color: var(--gl-accent); }
+.gl-nav-item--disabled { color: var(--gl-text-disabled); cursor: default; }
+.gl-nav-item--disabled:hover { color: var(--gl-text-disabled); }
+.gl-nav-item--disabled .gl-nav-ico { color: var(--gl-text-disabled); opacity: 0.7; }
 
 .gl-sidebar-foot { padding: 12px; border-top: 1px solid #d9e5ef; display: flex; flex-direction: column; gap: 8px; }
 .gl-ident { display: flex; align-items: center; gap: 9px; padding: 0 4px; }

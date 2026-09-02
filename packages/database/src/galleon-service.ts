@@ -805,6 +805,32 @@ export function createGalleonService(
     `;
   }
 
+  /**
+   * The catalog of buyable sources across publishers: active offers with their
+   * price and publisher. `walletId`, when given, marks the ones this wallet has
+   * already unlocked. Powers the consumer Sources tab — data only, no publisher
+   * marketing copy.
+   */
+  async function listSources(walletId?: string) {
+    await ensureDemoData();
+    const wallet = walletId ?? null;
+    return client<{
+      resource_id: string; title: string; description: string; canonical_url: string;
+      publisher_name: string; amount_minor: number; currency: "USD"; purchased: boolean;
+    }[]>`
+      SELECT r.id AS resource_id, r.title, r.description, r.canonical_url,
+        p.name AS publisher_name, o.amount_minor, o.currency,
+        (${wallet}::uuid IS NOT NULL AND EXISTS (
+          SELECT 1 FROM purchases pu WHERE pu.resource_id = r.id AND pu.wallet_id = ${wallet}
+        )) AS purchased
+      FROM offers o
+      JOIN resources r ON r.id = o.resource_id
+      JOIN publishers p ON p.id = r.publisher_id
+      WHERE o.status = 'active' AND r.status = 'active'
+      ORDER BY p.name, r.title
+    `;
+  }
+
   async function getPublisherSummary(publisherId = DEMO_IDS.publisher) {
     await ensureDemoData();
     const balanceRows = await client<{ balance_minor: number }[]>`
@@ -862,6 +888,7 @@ export function createGalleonService(
     getSessionUser,
     getWalletSummary,
     issueMcpToken,
+    listSources,
     markOnboarded,
     purchaseOffer,
     redeemEntitlement,
