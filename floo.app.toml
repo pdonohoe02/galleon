@@ -40,8 +40,10 @@ command = "exec pnpm --filter @galleon/platform-web exec next start -H 0.0.0.0 -
 migrate_command = "pnpm --filter @galleon/database db:migrate"
 dev_command = "pnpm --filter @galleon/platform-web dev"
 
-# Consumer wallet. Its hostname is set as GALLEON_CONSUMER_HOST.
-[services.wallet]
+# Consumer wallet — the app consumers log in to. Its hostname is set as
+# GALLEON_CONSUMER_HOST. Named `app` so the URL reads galleon-…-app rather than
+# galleon-…-wallet.
+[services.app]
 type = "web"
 path = "."
 port = 8080
