@@ -55,6 +55,33 @@ app.get("/ready", async (_request, response) => {
   }
 });
 
+// Lightweight activation probe. A client (or a one-line curl) hits this with
+// its wallet bearer token to prove the local MCP server can reach the wallet;
+// resolveWallet stamps last_used_at, which flips the "connected" indicator on
+// the wallet dashboard. The real MCP `initialize` handshake does the same, so
+// this is only a convenience for verifying the setup before running the agent.
+async function handleConnect(request: express.Request, response: express.Response) {
+  let wallet: { walletId: string } | null;
+  try {
+    wallet = await resolveWallet(request);
+  } catch {
+    response.status(503).json({ ok: false, error: "Authentication is temporarily unavailable." });
+    return;
+  }
+  if (!wallet) {
+    response.status(401).json({ ok: false, error: "A valid Galleon wallet token is required." });
+    return;
+  }
+  try {
+    const summary = await galleon.getWalletSummary(wallet.walletId);
+    response.json({ ok: true, wallet: { display_balance: summary.display_balance, mode: summary.mode } });
+  } catch {
+    response.json({ ok: true });
+  }
+}
+app.get("/mcp/connect", handleConnect);
+app.post("/mcp/connect", handleConnect);
+
 app.post("/mcp", async (request, response) => {
   let wallet: { walletId: string } | null;
   try {

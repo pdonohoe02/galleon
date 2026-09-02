@@ -53,10 +53,12 @@ export default async function ConsumerDashboardPage() {
     redirect("/consumer/sign-in?error=wrong_surface");
   }
 
-  const [wallet, purchases] = await Promise.all([
+  const [wallet, purchases, mcp] = await Promise.all([
     galleon.getWalletSummary(user.wallet_id),
     galleon.getConsumerPurchases(user.wallet_id),
+    galleon.getMcpConnection(user.id),
   ]);
+  const mcpStatus = mcp.connected ? "Codex connected" : mcp.has_token ? "Awaiting connection" : "Agent not connected";
 
   // Metrics from real ledger rows.
   const now = new Date();
@@ -119,7 +121,8 @@ export default async function ConsumerDashboardPage() {
         identity={{
           initials,
           name: user.email,
-          status: user.onboarded ? "Codex connected" : "Setup unfinished",
+          status: mcpStatus,
+          statusTone: mcp.connected ? "ok" : "muted",
           endpoint: mcpEndpoint.replace(/^https?:\/\//, ""),
         }}
       />

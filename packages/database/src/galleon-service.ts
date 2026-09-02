@@ -718,6 +718,21 @@ export function createGalleonService(
     return rows[0] ?? null;
   }
 
+  /**
+   * Whether the user's MCP token has ever been used by a client. The MCP server
+   * stamps last_used_at on every authenticated request (findUserByMcpToken and
+   * the /mcp/connect probe), so a non-null value means an agent reached the
+   * wallet at least once. The onboarding screen and the dashboard poll this to
+   * flip a live "connected" indicator.
+   */
+  async function getMcpConnection(userId: string): Promise<{ has_token: boolean; connected: boolean; last_used_at: string | null }> {
+    const rows = await client<{ last_used_at: string | null }[]>`
+      SELECT last_used_at FROM mcp_tokens WHERE user_id = ${userId} LIMIT 1
+    `;
+    if (rows.length === 0) return { has_token: false, connected: false, last_used_at: null };
+    return { has_token: true, connected: rows[0].last_used_at != null, last_used_at: rows[0].last_used_at };
+  }
+
   async function findUserByEmail(email: string): Promise<(UserRecord & { password_hash: string }) | null> {
     const rows = await client<{ id: string; email: string; kind: UserKind; password_hash: string; wallet_id: string | null; onboarded: boolean }[]>`
       SELECT u.id, u.email, u.kind, u.password_hash, w.id AS wallet_id, (u.onboarded_at IS NOT NULL) AS onboarded
@@ -842,6 +857,7 @@ export function createGalleonService(
     findUserByEmail,
     findUserByMcpToken,
     getConsumerPurchases,
+    getMcpConnection,
     getPublisherSummary,
     getSessionUser,
     getWalletSummary,

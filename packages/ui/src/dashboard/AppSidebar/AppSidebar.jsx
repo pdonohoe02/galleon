@@ -20,7 +20,7 @@ export function AppSidebar({ chip, items = [], identity, brandHref = '/', classN
         React.createElement('span', { className: 'gl-ident-avatar' }, identity.initials),
         React.createElement('span', { className: 'gl-ident-lines' },
           React.createElement('span', { className: 'gl-ident-name' }, identity.name),
-          identity.status && React.createElement('span', { className: 'gl-ident-status' }, identity.status)
+          identity.status && React.createElement('span', { className: cx('gl-ident-status', identity.statusTone === 'muted' && 'gl-ident-status--muted') }, identity.status)
         )
       ),
       identity.endpoint && React.createElement('span', { className: 'gl-ident-endpoint' }, identity.endpoint)
