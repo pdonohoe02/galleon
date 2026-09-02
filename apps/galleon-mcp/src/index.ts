@@ -1,5 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 
+import { DEMO_IDS } from "@galleon/contracts";
 import { createGalleonService } from "@galleon/database";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
@@ -14,12 +15,31 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "64kb" }));
 
-function authorized(request: express.Request): boolean {
+function bearer(request: express.Request): string | undefined {
+  const supplied = request.headers.authorization?.replace(/^Bearer\s+/i, "");
+  return supplied && supplied.length > 0 ? supplied : undefined;
+}
+
+function matchesDemoToken(supplied: string): boolean {
   if (process.env.GALLEON_DEMO_AUTH !== "true") return false;
   const expected = process.env.GALLEON_DEMO_BEARER_TOKEN;
-  const supplied = request.headers.authorization?.replace(/^Bearer\s+/i, "");
-  if (!expected || !supplied || expected.length !== supplied.length) return false;
+  if (!expected || expected.length !== supplied.length) return false;
   return timingSafeEqual(Buffer.from(expected), Buffer.from(supplied));
+}
+
+/**
+ * Resolve a request to the wallet its bearer token controls. A per-user token
+ * (issued from the wallet onboarding screen) binds to that user's own wallet;
+ * the shared demo token, when enabled, maps to the seeded demo wallet. Returns
+ * null when no valid credential is present.
+ */
+async function resolveWallet(request: express.Request): Promise<{ walletId: string } | null> {
+  const supplied = bearer(request);
+  if (!supplied) return null;
+  const user = await galleon.findUserByMcpToken(supplied);
+  if (user?.wallet_id) return { walletId: user.wallet_id };
+  if (matchesDemoToken(supplied)) return { walletId: DEMO_IDS.consumerWallet };
+  return null;
 }
 
 app.get("/health", (_request, response) => {
@@ -36,21 +56,38 @@ app.get("/ready", async (_request, response) => {
 });
 
 app.post("/mcp", async (request, response) => {
-  if (!authorized(request)) {
-    response.status(process.env.GALLEON_DEMO_AUTH === "true" ? 401 : 503).json({
+  let wallet: { walletId: string } | null;
+  try {
+    wallet = await resolveWallet(request);
+  } catch (error) {
+    console.error("MCP auth lookup failed", {
+      error: error instanceof Error ? error.message : "unknown error",
+      requestId: randomUUID(),
+    });
+    response.status(503).json({ jsonrpc: "2.0", error: { code: -32603, message: "Authentication is temporarily unavailable." }, id: null });
+    return;
+  }
+
+  if (!wallet) {
+    // A per-user token is always accepted; the shared demo token only when
+    // GALLEON_DEMO_AUTH is on. With neither, connecting is off entirely.
+    const demoOn = process.env.GALLEON_DEMO_AUTH === "true";
+    response.status(bearer(request) || demoOn ? 401 : 503).json({
       jsonrpc: "2.0",
       error: {
         code: -32001,
-        message: process.env.GALLEON_DEMO_AUTH === "true"
-          ? "A valid demo bearer token is required."
-          : "Demo authentication is disabled. Set GALLEON_DEMO_AUTH=true for local use.",
+        message: bearer(request)
+          ? "The bearer token is not a valid Galleon wallet token."
+          : demoOn
+            ? "A wallet bearer token is required. Generate one on your Galleon wallet setup screen."
+            : "Wallet authentication is not configured. Generate a token on your Galleon wallet setup screen, or set GALLEON_DEMO_AUTH=true for the shared demo wallet.",
       },
       id: null,
     });
     return;
   }
 
-  const server = createMcpServer(galleon);
+  const server = createMcpServer(galleon, wallet.walletId);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   response.on("close", () => {
     void transport.close();
