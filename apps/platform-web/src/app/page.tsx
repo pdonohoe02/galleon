@@ -11,7 +11,6 @@ const consumerUrl =
 const publisherUrl =
   process.env.GALLEON_PUBLISHER_URL ??
   "http://publishers.galleon.localhost:3000";
-const blogUrl = process.env.GALLEON_MOCK_BLOG_URL ?? "http://127.0.0.1:3002";
 const publisherDemoUrl =
   process.env.GALLEON_PUBLISHER_DEMO_URL ?? "http://127.0.0.1:3001";
 
@@ -41,7 +40,7 @@ const sampleStatement = [
   },
   {
     amount: "$0.04",
-    publisher: "Drift Signal",
+    publisher: "Verso Papers",
     title: "Interview: the last dispatcher",
   },
 ];
@@ -232,7 +231,7 @@ export default function MarketingPage() {
               <span>Product</span>
               <a href={consumerUrl}>Wallet</a>
               <a href="#how-it-works">How it works</a>
-              <a href={blogUrl}>Sources</a>
+              <a href={publisherDemoUrl}>Sources</a>
             </div>
             <div className="glm-footer-col">
               <span>Publishers</span>

@@ -8,7 +8,6 @@ The platform is split into two deployable trust boundaries:
 
 - `apps/platform-web` serves the public landing page, consumer wallet dashboard, publisher dashboard, the platform HTTP APIs, and the authenticated Streamable HTTP wallet MCP at the app host's `/mcp` (`src/app/mcp`). One deployment is mapped to `galleon`, `app.galleon`, and `publishers.galleon` hostnames. Purchase authority lives server-side in Galleon, never in publisher page JavaScript.
 - `apps/publisher-demo` is an independently hosted example publisher. Its top-level JavaScript registers page-scoped WebMCP tools through `packages/publisher-sdk`.
-- `apps/mock-blog` is a second, plain publication surface with one mock post. It provides a clean baseline before Galleon integration.
 
 Shared security-sensitive code lives in `packages/contracts`, `packages/crypto`, and `packages/database`. The publisher integration is isolated in `packages/publisher-sdk`.
 
