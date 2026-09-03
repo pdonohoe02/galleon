@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
     "@galleon/contracts",
     "@galleon/crypto",
     "@galleon/database",
+    "@galleon/ui",
   ],
 };
 

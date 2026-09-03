@@ -75,3 +75,15 @@ export async function generateMcpToken(): Promise<{ token: string }> {
   if (!user?.wallet_id) throw new Error("Not signed in.");
   return galleon.issueMcpToken(user.id);
 }
+
+/**
+ * Poll target for the live connection indicator. `connected` becomes true once
+ * the MCP server has seen an authenticated request for this user's token (the
+ * agent's initialize handshake, or the /mcp/connect probe).
+ */
+export async function checkMcpConnection(): Promise<{ hasToken: boolean; connected: boolean }> {
+  const user = await getCurrentUser();
+  if (!user) return { hasToken: false, connected: false };
+  const status = await galleon.getMcpConnection(user.id);
+  return { hasToken: status.has_token, connected: status.connected };
+}

@@ -18,4 +18,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Overridden per service by `command` in floo.app.toml.
-CMD ["node", "apps/galleon-mcp/dist/index.js"]
+CMD ["pnpm", "--filter", "@galleon/platform-web", "exec", "next", "start", "apps/platform-web", "-H", "0.0.0.0"]

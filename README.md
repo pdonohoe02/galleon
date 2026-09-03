@@ -4,10 +4,9 @@ Galleon lets an AI agent purchase narrowly scoped access to content that remains
 
 ## Architecture at a glance
 
-The platform is split into three deployable trust boundaries:
+The platform is split into two deployable trust boundaries:
 
-- `apps/platform-web` serves the public landing page, consumer wallet dashboard, publisher dashboard, and platform HTTP APIs. One deployment is mapped to `galleon`, `app.galleon`, and `publishers.galleon` hostnames.
-- `apps/galleon-mcp` is the authenticated Streamable HTTP wallet MCP used by Codex. Purchase authority lives here, never in publisher page JavaScript.
+- `apps/platform-web` serves the public landing page, consumer wallet dashboard, publisher dashboard, the platform HTTP APIs, and the authenticated Streamable HTTP wallet MCP at the app host's `/mcp` (`src/app/mcp`). One deployment is mapped to `galleon`, `app.galleon`, and `publishers.galleon` hostnames. Purchase authority lives server-side in Galleon, never in publisher page JavaScript.
 - `apps/publisher-demo` is an independently hosted example publisher. Its top-level JavaScript registers page-scoped WebMCP tools through `packages/publisher-sdk`.
 - `apps/mock-blog` is a second, plain publication surface with one mock post. It provides a clean baseline before Galleon integration.
 
@@ -36,8 +35,7 @@ Local services:
 | Publisher console | `http://publishers.galleon.localhost:3200` |
 | Publisher demo    | `http://127.0.0.1:3001`                    |
 | Mock blog         | `http://127.0.0.1:3002`                    |
-| Wallet MCP        | `http://127.0.0.1:3100/mcp`                |
-| MCP health        | `http://127.0.0.1:3100/health`             |
+| Wallet MCP        | `http://app.galleon.localhost:3200/mcp`    |
 
 The platform also exposes `/consumer` and `/publishers` as direct local fallbacks if wildcard localhost hostnames are unavailable.
 
@@ -51,7 +49,7 @@ signing up. Either way, add the token to Codex's `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.galleon]
-url = "http://127.0.0.1:3100/mcp"
+url = "http://app.galleon.localhost:3200/mcp"
 bearer_token = "gln_…"            # per-user token, or the demo token
 experimental_use_rmcp_client = true
 ```

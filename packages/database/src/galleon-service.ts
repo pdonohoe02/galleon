@@ -718,6 +718,21 @@ export function createGalleonService(
     return rows[0] ?? null;
   }
 
+  /**
+   * Whether the user's MCP token has ever been used by a client. The MCP server
+   * stamps last_used_at on every authenticated request (findUserByMcpToken and
+   * the /mcp/connect probe), so a non-null value means an agent reached the
+   * wallet at least once. The onboarding screen and the dashboard poll this to
+   * flip a live "connected" indicator.
+   */
+  async function getMcpConnection(userId: string): Promise<{ has_token: boolean; connected: boolean; last_used_at: string | null }> {
+    const rows = await client<{ last_used_at: string | null }[]>`
+      SELECT last_used_at FROM mcp_tokens WHERE user_id = ${userId} LIMIT 1
+    `;
+    if (rows.length === 0) return { has_token: false, connected: false, last_used_at: null };
+    return { has_token: true, connected: rows[0].last_used_at != null, last_used_at: rows[0].last_used_at };
+  }
+
   async function findUserByEmail(email: string): Promise<(UserRecord & { password_hash: string }) | null> {
     const rows = await client<{ id: string; email: string; kind: UserKind; password_hash: string; wallet_id: string | null; onboarded: boolean }[]>`
       SELECT u.id, u.email, u.kind, u.password_hash, w.id AS wallet_id, (u.onboarded_at IS NOT NULL) AS onboarded
@@ -790,6 +805,32 @@ export function createGalleonService(
     `;
   }
 
+  /**
+   * The catalog of buyable sources across publishers: active offers with their
+   * price and publisher. `walletId`, when given, marks the ones this wallet has
+   * already unlocked. Powers the consumer Sources tab — data only, no publisher
+   * marketing copy.
+   */
+  async function listSources(walletId?: string) {
+    await ensureDemoData();
+    const wallet = walletId ?? null;
+    return client<{
+      resource_id: string; title: string; description: string; canonical_url: string;
+      publisher_name: string; amount_minor: number; currency: "USD"; purchased: boolean;
+    }[]>`
+      SELECT r.id AS resource_id, r.title, r.description, r.canonical_url,
+        p.name AS publisher_name, o.amount_minor, o.currency,
+        (${wallet}::uuid IS NOT NULL AND EXISTS (
+          SELECT 1 FROM purchases pu WHERE pu.resource_id = r.id AND pu.wallet_id = ${wallet}
+        )) AS purchased
+      FROM offers o
+      JOIN resources r ON r.id = o.resource_id
+      JOIN publishers p ON p.id = r.publisher_id
+      WHERE o.status = 'active' AND r.status = 'active'
+      ORDER BY p.name, r.title
+    `;
+  }
+
   async function getPublisherSummary(publisherId = DEMO_IDS.publisher) {
     await ensureDemoData();
     const balanceRows = await client<{ balance_minor: number }[]>`
@@ -842,10 +883,12 @@ export function createGalleonService(
     findUserByEmail,
     findUserByMcpToken,
     getConsumerPurchases,
+    getMcpConnection,
     getPublisherSummary,
     getSessionUser,
     getWalletSummary,
     issueMcpToken,
+    listSources,
     markOnboarded,
     purchaseOffer,
     redeemEntitlement,

@@ -1,149 +1,145 @@
 import { DEMO_IDS, formatUsd } from "@galleon/contracts";
+import {
+  AppSidebar,
+  AreaChart,
+  Button,
+  Canvas,
+  DataRow,
+  DataTable,
+  Metric,
+  MetricStrip,
+  PanelHead,
+  Segmented,
+  Sparkline,
+  Tag,
+  TopBar,
+} from "@galleon/ui";
 
 import { galleon } from "@/lib/galleon";
 
+import { iconAgents, iconOverview, iconSettings, iconSources, iconSpending } from "../consumer/nav-icons";
+
 export const dynamic = "force-dynamic";
 
-const publisherOrigin =
-  process.env.GALLEON_PUBLISHER_ORIGIN ?? "http://127.0.0.1:3001";
+const publisherOrigin = process.env.GALLEON_PUBLISHER_ORIGIN ?? "http://127.0.0.1:3001";
 const marketingUrl = process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200";
 
-/** `offer_available` reads as "Offer available" — the tag spells the state out. */
+const dayFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });
+const DAY_MS = 86_400_000;
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
 function statusLabel(status: string): string {
   const words = status.replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-function statusTone(status: string): string {
-  if (status === "active") return "gl-tag--positive";
-  if (status === "paused") return "gl-tag--warning";
-  return "gl-tag--neutral";
-}
-
 export default async function PublisherDashboardPage() {
   const summary = await galleon.getPublisherSummary(DEMO_IDS.publisher);
-  const latestSale = summary.sales[0];
+
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const buckets = new Array<number>(30).fill(0);
+  for (const sale of summary.sales) {
+    const diff = Math.floor((todayStart - startOfDay(new Date(sale.purchased_at))) / DAY_MS);
+    if (diff >= 0 && diff < 30) buckets[29 - diff] += sale.amount_minor;
+  }
+  const revenueValues = buckets.map((m) => m / 100);
+  const average = summary.purchase_count > 0 ? Math.round(summary.balance_minor / summary.purchase_count) : 0;
+
+  const labelAt = (i: number, anchor?: string) => ({
+    x: (i / 29) * 880,
+    text: dayFormat.format(new Date(todayStart - (29 - i) * DAY_MS)),
+    anchor,
+  });
+  const chartLabels = [labelAt(0), labelAt(9), labelAt(19), labelAt(29, "end")];
+
+  const navItems = [
+    { key: "overview", label: "Overview", icon: iconOverview, active: true, href: "/publishers" },
+    { key: "revenue", label: "Revenue", icon: iconSpending, href: "#revenue" },
+    { key: "articles", label: "Articles", icon: iconSources, href: "#sources" },
+    { key: "payouts", label: "Payouts", icon: iconAgents, disabled: true },
+    { key: "settings", label: "Settings", icon: iconSettings, disabled: true },
+  ];
 
   return (
-    // Publisher surface: the data-gl-theme swaps the accent from ocean to mint,
-    // which is how a console is told apart from a wallet at a glance.
-    <div className="galleon-ds" data-gl-theme="publisher">
-      <div className="gl-shell">
-        <header className="gl-masthead">
-          <a className="gl-wordmark" href={marketingUrl}>
-            Galleon
-          </a>
-          <nav className="gl-masthead__nav">
-            <a href="/publishers" aria-current="page">
-              Console
-            </a>
-            <a href={publisherOrigin}>Origin</a>
-          </nav>
-          <div className="gl-masthead__aside">
-            <span className="gl-status">
-              <span className="gl-status__dot gl-status__dot--ready" />
-              Publisher origin verified
-            </span>
-          </div>
-        </header>
+    <div className="gl-app" data-gl-theme="publisher">
+      <AppSidebar
+        chip="Pub"
+        brandHref={marketingUrl}
+        items={navItems}
+        identity={{
+          initials: "NR",
+          name: "Northline Review",
+          status: "Origin verified",
+          endpoint: publisherOrigin.replace(/^https?:\/\//, ""),
+        }}
+      />
+      <div className="gl-main">
+        <TopBar
+          name="Overview"
+          context="Last 30 days"
+          actions={
+            <>
+              <Segmented items={[{ label: "7d" }, { label: "30d", active: true }, { label: "90d" }]} />
+              <Button variant="secondary" size="sm">
+                Export
+              </Button>
+            </>
+          }
+        />
+        <Canvas>
+          <MetricStrip>
+            <Metric label="Gross revenue" figure={summary.display_balance} sub="Settled to Northline Review" />
+            <Metric label="Purchases" figure={String(summary.purchase_count)} sub="Signed entitlements" />
+            <Metric label="Average price" figure={formatUsd(average)} sub="Per source" />
+            <Metric label="Live sources" figure={String(summary.resources.length)} sub="Priced on this origin" />
+          </MetricStrip>
 
-        <div className="gl-page-header">
-          <div className="gl-page-header__main">
-            <p className="gl-eyebrow gl-eyebrow--accent">Publisher console</p>
-            <h1 className="gl-display gl-display--3">
-              Price the source. Keep the relationship.
-            </h1>
-          </div>
-          <div className="gl-page-header__aside">
-            <div className="gl-balance">
-              <span className="gl-balance__label">Gross sales</span>
-              <span className="gl-balance__value gl-amount gl-amount--hero">
-                {summary.display_balance}
-              </span>
-              <span className="gl-balance__caption">
-                {summary.purchase_count}{" "}
-                {summary.purchase_count === 1 ? "purchase" : "purchases"}
-              </span>
+          <section className="gl-panel" id="revenue" style={{ scrollMarginTop: 68 }}>
+            <PanelHead
+              title="Revenue"
+              count="Last 30 days"
+              note={summary.purchase_count > 0 ? `Gross ${summary.display_balance}` : "No sales yet"}
+            />
+            <div className="gl-panel-body">
+              <AreaChart values={revenueValues} labels={chartLabels} />
             </div>
-          </div>
-        </div>
+          </section>
 
-        <section className="gl-section">
-          <div className="gl-section__head">
-            <p className="gl-eyebrow gl-eyebrow--soft">Northline Review</p>
-            <span className="gl-section__aside">
-              <span className="gl-tag gl-tag--positive">Origin verified</span>
-            </span>
-          </div>
-          <p className="gl-lede gl-lede--body">
-            The source body remains on the publisher server. Galleon sees the
-            offer, ledger movement, entitlement, and redemption receipt.
-          </p>
-          <div className="gl-snippet gl-snippet--inline">
-            <span className="gl-snippet__label">Publisher origin</span>
-            <div className="gl-snippet__row">
-              <span className="gl-snippet__value">{publisherOrigin}</span>
-            </div>
-          </div>
-        </section>
+          <DataTable columns="minmax(220px,1fr) 120px 96px 84px" minWidth={640} id="sources" style={{ scrollMarginTop: 68 }}>
+            <PanelHead
+              title="Sources & offers"
+              count={`${summary.resources.length} ${summary.resources.length === 1 ? "source" : "sources"} · ${summary.purchase_count} sold`}
+            />
+            <DataRow head>
+              <span className="gl-dc-head">Source</span>
+              <span className="gl-dc-head">Status</span>
+              <span className="gl-dc-head">Trend</span>
+              <span className="gl-dc-head gl-dc-head--end">Price</span>
+            </DataRow>
+            {summary.resources.map((resource) => {
+              const live = resource.status === "active";
+              return (
+                <DataRow key={resource.resource_id}>
+                  <span className={live ? "gl-dc-title" : "gl-dc-title gl-dc-title--muted"}>{resource.title}</span>
+                  <span>
+                    <Tag row>{statusLabel(resource.status)}</Tag>
+                  </span>
+                  <span>
+                    <Sparkline values={live ? [2, 3, 2, 4, 3, 5, 4, 6] : [1, 1, 1, 1]} muted={!live} />
+                  </span>
+                  <span className="gl-dc-amount">{formatUsd(resource.amount_minor)}</span>
+                </DataRow>
+              );
+            })}
+          </DataTable>
 
-        {latestSale && (
-          <div className="gl-section">
-            <div className="gl-notice gl-notice--success">
-              <div className="gl-notice__copy">
-                <span className="gl-notice__title">Latest sale</span>
-                <span>{latestSale.title}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <section className="gl-section">
-          <div className="gl-section__head">
-            <p className="gl-eyebrow gl-eyebrow--soft">Sources &amp; offers</p>
-            <span className="gl-section__aside">
-              {summary.resources.length}{" "}
-              {summary.resources.length === 1 ? "source" : "sources"} ·{" "}
-              {summary.purchase_count} sold
-            </span>
-          </div>
-
-          <div className="gl-ledger">
-            <table className="gl-ledger__table">
-              <caption className="gl-ledger__caption">
-                Every source priced on this origin
-              </caption>
-              <thead>
-                <tr>
-                  <th className="gl-ledger__cell--start gl-ledger__cell--grow">
-                    Source
-                  </th>
-                  <th className="gl-ledger__cell--start">Status</th>
-                  <th className="gl-ledger__cell--end">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.resources.map((resource) => (
-                  <tr key={resource.resource_id}>
-                    <td className="gl-ledger__cell--grow">
-                      <span className="gl-ledger__link">{resource.title}</span>
-                    </td>
-                    <td>
-                      <span className={`gl-tag ${statusTone(resource.status)}`}>
-                        {statusLabel(resource.status)}
-                      </span>
-                    </td>
-                    <td className="gl-ledger__cell--end">
-                      <span className="gl-amount gl-amount--sm">
-                        {formatUsd(resource.amount_minor)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <span style={{ padding: "2px 2px 8px", color: "var(--gl-text-meta)", fontSize: 12 }}>
+            Galleon settles in demo credits. No real money moves.
+          </span>
+        </Canvas>
       </div>
     </div>
   );
