@@ -67,15 +67,6 @@ ingress = "public"
 command = "exec pnpm --filter @galleon/publisher-demo exec next start -H 0.0.0.0 -p ${PORT:-8080}"
 dev_command = "pnpm --filter @galleon/publisher-demo dev"
 
-# Drift Signal — the unpaid publication, for contrast.
-[services.blog]
-type = "web"
-path = "."
-port = 8080
-ingress = "public"
-command = "exec pnpm --filter @galleon/mock-blog exec next start -H 0.0.0.0 -p ${PORT:-8080}"
-dev_command = "pnpm --filter @galleon/mock-blog dev"
-
 # The wallet MCP is no longer its own service. platform-web serves it in-process
 # at the app host's /mcp (apps/platform-web/src/app/mcp), so an agent points at
 # app.<host>/mcp — one URL under the dashboard's domain, purchase authority still

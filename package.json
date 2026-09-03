@@ -13,11 +13,11 @@
     "build": "pnpm -r --if-present build",
     "db:generate": "pnpm --filter @galleon/database db:generate",
     "db:migrate": "pnpm --filter @galleon/database db:migrate",
-    "dev": "sh -c 'set -a; [ ! -f .env ] || . ./.env; set +a; exec pnpm --parallel --filter @galleon/platform-web --filter @galleon/publisher-demo --filter @galleon/mock-blog dev'",
+    "dev": "sh -c 'set -a; [ ! -f .env ] || . ./.env; set +a; exec pnpm --parallel --filter @galleon/platform-web --filter @galleon/publisher-demo dev'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "start": "sh -c 'set -a; [ ! -f .env ] || . ./.env; set +a; exec pnpm --parallel --filter @galleon/platform-web --filter @galleon/publisher-demo --filter @galleon/mock-blog start'",
+    "start": "sh -c 'set -a; [ ! -f .env ] || . ./.env; set +a; exec pnpm --parallel --filter @galleon/platform-web --filter @galleon/publisher-demo start'",
     "test": "vitest run",
     "typecheck": "pnpm -r --if-present typecheck"
   },
