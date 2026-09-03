@@ -5,11 +5,9 @@
 ```text
 galleon.example ───────────────┐
 app.galleon.example ───────────┼─> apps/platform-web ──> shared services ──> PostgreSQL
-publishers.galleon.example ────┘             ^
-                                              |
-mcp.galleon.example/mcp ─> apps/galleon-mcp ─┘
-                                              |
-paper.example ───────────> publisher-demo ────┘ entitlement redemption only
+app.galleon.example/mcp ───────┤   (wallet MCP served in-process)
+publishers.galleon.example ────┘
+paper.example ───────────> publisher-demo ──> entitlement redemption only
        └─ top-level WebMCP tools
 ```
 
@@ -53,7 +51,7 @@ Consumers sign up with an email and password on the wallet host. One `users` tab
 | Concern                                            | Owner            |
 | -------------------------------------------------- | ---------------- |
 | User session and dashboard authorization           | `platform-web`   |
-| Wallet identity, purchase approval, and MCP scopes | `galleon-mcp`    |
+| Wallet identity, purchase approval, and MCP scopes | `platform-web` (`/mcp`) |
 | Offer and entitlement schemas                      | `contracts`      |
 | Signing and verification                           | `crypto`         |
 | Atomic ledger and idempotency                      | `database`       |

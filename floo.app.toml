@@ -1,6 +1,6 @@
 # Galleon — agent-native payment rail between AI agents and publishers.
 #
-# Four services share one image (see Dockerfile); each runs a different start
+# Several services share one image (see Dockerfile); each runs a different start
 # command. publisher-demo is a SEPARATE origin on purpose: the product claim is
 # that paid source content stays on the publisher's own infrastructure.
 #
@@ -76,21 +76,10 @@ ingress = "public"
 command = "exec pnpm --filter @galleon/mock-blog exec next start -H 0.0.0.0 -p ${PORT:-8080}"
 dev_command = "pnpm --filter @galleon/mock-blog dev"
 
-# Wallet MCP: holds wallet context, validates signed offers, issues entitlements.
-#
-# Runs through tsx rather than the compiled dist/. The workspace packages export
-# TypeScript source directly (@galleon/database exports ./src/index.ts, whose
-# relative imports are extensionless), so plain `node dist/index.js` dies with
-# ERR_MODULE_NOT_FOUND on ./connection. Next.js transpiles those packages at
-# build time, which is why only this service hit it. tsx is in the image because
-# the Dockerfile never prunes devDependencies.
-[services.mcp]
-type = "api"
-path = "."
-port = 8080
-ingress = "public"
-command = "exec pnpm --filter @galleon/mcp start"
-dev_command = "pnpm --filter @galleon/mcp dev"
+# The wallet MCP is no longer its own service. platform-web serves it in-process
+# at the app host's /mcp (apps/platform-web/src/app/mcp), so an agent points at
+# app.<host>/mcp — one URL under the dashboard's domain, purchase authority still
+# server-side in Galleon.
 
 [resources]
 cpu = "1"
