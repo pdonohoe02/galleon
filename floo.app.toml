@@ -75,7 +75,12 @@ dev_command = "pnpm --filter @galleon/publisher-demo dev"
 [resources]
 cpu = "1"
 memory = "1Gi"
-# Pinned to one instance: the ES256 signing key is still generated to a file
-# at GALLEON_SIGNING_KEY_PATH, so a second instance would mint a different key
-# and offers signed by one would fail verification on the other.
+# Keep one instance of every service warm so the demo has no cold starts. This
+# is app-wide: floo's [resources] applies to all services, so all four stay
+# resident. min and max are both 1 — exactly one instance each.
+#
+# Pinning to one instance is also required: the ES256 signing key is generated
+# to a file at GALLEON_SIGNING_KEY_PATH, so a second instance would mint a
+# different key and offers signed by one would fail verification on the other.
+min_instances = 1
 max_instances = 1
