@@ -7,6 +7,22 @@ import { checkMcpConnection, generateMcpToken } from "./onboarding/actions";
 
 const TOKEN_PLACEHOLDER = "YOUR_WALLET_TOKEN";
 
+/** A natural-language brief the user pastes to their AI agent to set it up. */
+function aiInstructions(endpoint: string, token: string): string {
+  return [
+    "Set up the Galleon wallet MCP so you can buy sources for me.",
+    "",
+    '1. Add an MCP server named "galleon":',
+    `   url: ${endpoint}`,
+    `   bearer token: ${token}`,
+    "   (If you are Codex, also set experimental_use_rmcp_client = true in ~/.codex/config.toml.)",
+    "2. Connect and call get_wallet_summary to confirm you can reach my wallet.",
+    "3. When I ask for a source, use purchase_offer to buy it within my wallet's",
+    "   spend limits, then cite the source you used.",
+  ].join("\n");
+}
+
+/** The equivalent Codex config.toml block, for users who prefer to edit it. */
 function codexConfig(endpoint: string, token: string): string {
   return [
     "[mcp_servers.galleon]",
@@ -16,16 +32,11 @@ function codexConfig(endpoint: string, token: string): string {
   ].join("\n");
 }
 
-function connectCommand(endpoint: string, token: string): string {
-  // endpoint ends in /mcp; the activation probe lives at /mcp/connect.
-  return `curl -fsS ${endpoint}/connect -H "Authorization: Bearer ${token}"`;
-}
-
-function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+function CopyButton({ value, label = "Copy", variant = "secondary" }: { value: string; label?: string; variant?: "primary" | "secondary" }) {
   const [copied, setCopied] = useState(false);
   return (
     <Button
-      variant="secondary"
+      variant={variant}
       size="sm"
       onClick={async () => {
         try {
@@ -48,7 +59,7 @@ const boxStyle: React.CSSProperties = {
   background: "var(--gl-surface-inline)",
   color: "var(--gl-text)",
   fontSize: 14,
-  padding: "10px 14px",
+  padding: "12px 14px",
   overflowX: "auto",
 };
 
@@ -83,13 +94,11 @@ export function McpSetup({ endpoint }: { endpoint: string }) {
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
 
-  const host = endpoint.replace(/^https?:\/\//, "");
-  const isLocal = /^(127\.0\.0\.1|localhost|0\.0\.0\.0)/.test(host);
-  const config = codexConfig(endpoint, token ?? TOKEN_PLACEHOLDER);
-  const command = connectCommand(endpoint, token ?? TOKEN_PLACEHOLDER);
+  const host = endpoint.replace(/^https?:\/\//, "").replace(/\/mcp$/, "");
+  const shown = token ?? TOKEN_PLACEHOLDER;
+  const brief = aiInstructions(endpoint, shown);
+  const config = codexConfig(endpoint, shown);
 
-  // Poll for the connection until it lands, so the card flips to green the
-  // moment the agent (or the curl below) reaches the server with this token.
   useEffect(() => {
     if (connected) return;
     let alive = true;
@@ -125,14 +134,10 @@ export function McpSetup({ endpoint }: { endpoint: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       <p style={{ margin: 0, color: "var(--gl-text-muted)", fontSize: 15, lineHeight: 1.6, maxWidth: "62ch" }}>
-        Galleon runs a small <strong>MCP server{isLocal ? " on your machine" : ""}</strong> — the broker your
-        agent talks to. It holds this wallet&apos;s token and the authority to approve purchases and sign
-        entitlements, so that power stays with you: it never lives inside a publisher&apos;s page and never
-        travels to the publisher. Your agent asks the {isLocal ? "local " : ""}server to buy a source, the
-        server checks your budget, pays from <em>this</em> wallet, and hands back a signed receipt.
-        {isLocal ? " Start it with " : ""}
-        {isLocal ? <span style={{ fontWeight: 500 }}>pnpm --filter @galleon/mcp dev</span> : null}
-        {isLocal ? " if it isn't already running." : ""}
+        Galleon hosts your wallet&apos;s MCP at <span style={{ fontWeight: 500 }}>{host}/mcp</span>. Point your AI
+        agent at it with the token below — that&apos;s how it reads your balance and buys sources within your
+        limits. Purchase authority stays inside Galleon; it never lives in a publisher&apos;s page. Nothing to
+        run on your machine.
       </p>
 
       {/* Step 1 — token */}
@@ -154,29 +159,29 @@ export function McpSetup({ endpoint }: { endpoint: string }) {
         ) : null}
       </div>
 
-      {/* Step 2 — config */}
+      {/* Step 2 — hand it to the AI */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <StepLabel n={2}>
-            Add it to Codex — paste into <span style={{ fontWeight: 500 }}>~/.codex/config.toml</span>
-          </StepLabel>
-          <CopyButton value={config} label="Copy config" />
+          <StepLabel n={2}>Paste this to your AI agent</StepLabel>
+          <CopyButton value={brief} label="Copy for your AI" variant="primary" />
         </div>
-        <pre style={{ ...boxStyle, margin: 0, whiteSpace: "pre", lineHeight: 1.55, fontFamily: "inherit" }}>{config}</pre>
-        {!token ? <span className="gl-field-hint">Generate a token above to fill in bearer_token.</span> : null}
+        <pre style={{ ...boxStyle, margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.55, fontFamily: "inherit" }}>{brief}</pre>
+        {!token ? <span className="gl-field-hint">Generate a token above and it fills in automatically.</span> : null}
       </div>
 
-      {/* Step 3 — activate */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <StepLabel n={3}>Activate — connect once with your token</StepLabel>
-          <CopyButton value={command} label="Copy command" />
+      {/* Manual alternative */}
+      <details style={{ borderTop: "1px solid var(--gl-line-soft)", paddingTop: 14 }}>
+        <summary style={{ cursor: "pointer", color: "var(--gl-text-muted)", fontSize: 14, fontWeight: 500 }}>
+          Prefer to edit config yourself? (Codex)
+        </summary>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBlockStart: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <span className="gl-field-label">~/.codex/config.toml</span>
+            <CopyButton value={config} label="Copy config" />
+          </div>
+          <pre style={{ ...boxStyle, margin: 0, whiteSpace: "pre", lineHeight: 1.55, fontFamily: "inherit" }}>{config}</pre>
         </div>
-        <p style={{ margin: 0, color: "var(--gl-text-muted)", fontSize: 14, lineHeight: 1.55, maxWidth: "62ch" }}>
-          Start Codex and it connects on launch, or run this to check the link right now:
-        </p>
-        <pre style={{ ...boxStyle, margin: 0, whiteSpace: "pre", lineHeight: 1.55, fontFamily: "inherit" }}>{command}</pre>
-      </div>
+      </details>
 
       {/* Live status */}
       <div

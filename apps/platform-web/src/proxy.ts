@@ -24,9 +24,10 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Static assets must never be rewritten onto a surface, or the wallet and
-// console hosts serve /consumer/icon.svg (a 404) instead of the icon.
-// icon.svg is the App Router favicon convention; favicon.ico is the legacy one.
+// Static assets and the MCP endpoint must never be rewritten onto a surface, or
+// the wallet host would serve /consumer/icon.svg (a 404) or /consumer/mcp. The
+// wallet MCP is exposed at the app host's own /mcp path (app/mcp/route.ts), so
+// exclude it here too. icon.svg is the App Router favicon convention.
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon.svg).*)"],
+  matcher: ["/((?!api|mcp|_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };
