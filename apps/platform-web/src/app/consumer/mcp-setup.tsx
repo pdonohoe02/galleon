@@ -14,8 +14,10 @@ function aiInstructions(endpoint: string, token: string): string {
     "",
     '1. Add an MCP server named "galleon":',
     `   url: ${endpoint}`,
-    `   bearer token: ${token}`,
-    "   (If you are Codex, also set experimental_use_rmcp_client = true in ~/.codex/config.toml.)",
+    `   auth: send the HTTP header "Authorization: Bearer ${token}"`,
+    "   (If you are Codex, put this under [mcp_servers.galleon] in ~/.codex/config.toml:",
+    `      http_headers = { Authorization = "Bearer ${token}" }`,
+    "      experimental_use_rmcp_client = true )",
     "2. Connect and call get_wallet_summary to confirm you can reach my wallet.",
     "3. When I ask for a source, use purchase_offer to buy it within my wallet's",
     "   spend limits, then cite the source you used.",
@@ -27,7 +29,7 @@ function codexConfig(endpoint: string, token: string): string {
   return [
     "[mcp_servers.galleon]",
     `url = "${endpoint}"`,
-    `bearer_token = "${token}"`,
+    `http_headers = { Authorization = "Bearer ${token}" }`,
     "experimental_use_rmcp_client = true",
   ].join("\n");
 }
