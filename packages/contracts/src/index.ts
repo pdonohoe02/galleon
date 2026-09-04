@@ -11,30 +11,50 @@ export const DEMO_IDS = {
   secondOffer: "00000000-0000-4000-8000-000000000008",
 } as const;
 
-export const DEMO_SOURCE = {
-  authors: ["Mara Venn"],
-  canonical_url: "http://127.0.0.1:3001/",
-  citation: {
-    canonical_url: "http://127.0.0.1:3001/",
-    display_text:
-      "Venn, M. (2026). What changes when a source can quote its own price? Northline Review.",
-  },
-  content_sha256:
-    "33497b7ab3c6046290613b3e9d93a2404fd02b2687d109815de7e68b9c483703",
-  content_type: "report",
-  description:
-    "A field study of independent publishers testing machine-readable, one-off source access.",
-  language: "en",
-  published_at: "2026-08-28T09:00:00Z",
-  publisher_name: "Northline Review",
-  questions_answered: [
-    "How did independent publishers respond to one-off agent purchases?",
-    "Which offer attributes affected source purchase conversion?",
-  ],
-  resource_id: DEMO_IDS.resource,
-  title: "What changes when a source can quote its own price?",
-  topics: ["agent commerce", "digital publishing", "micropayments"],
-} as const;
+export const DEFAULT_PUBLISHER_DEMO_URL = "http://127.0.0.1:3001";
+
+export function getPublisherDemoOrigin(publisherDemoUrl?: string): string {
+  const origin = (publisherDemoUrl ?? DEFAULT_PUBLISHER_DEMO_URL).match(
+    /^https?:\/\/[^/?#]+/i,
+  )?.[0];
+  if (!origin) {
+    throw new Error(
+      "GALLEON_PUBLISHER_DEMO_URL must be an absolute HTTP(S) URL.",
+    );
+  }
+  return origin;
+}
+
+export function createDemoSource(publisherDemoUrl?: string) {
+  const canonicalUrl = `${getPublisherDemoOrigin(publisherDemoUrl)}/`;
+
+  return {
+    authors: ["Mara Venn"],
+    canonical_url: canonicalUrl,
+    citation: {
+      canonical_url: canonicalUrl,
+      display_text:
+        "Venn, M. (2026). What changes when a source can quote its own price? Northline Review.",
+    },
+    content_sha256:
+      "33497b7ab3c6046290613b3e9d93a2404fd02b2687d109815de7e68b9c483703",
+    content_type: "report",
+    description:
+      "A field study of independent publishers testing machine-readable, one-off source access.",
+    language: "en",
+    published_at: "2026-08-28T09:00:00Z",
+    publisher_name: "Northline Review",
+    questions_answered: [
+      "How did independent publishers respond to one-off agent purchases?",
+      "Which offer attributes affected source purchase conversion?",
+    ],
+    resource_id: DEMO_IDS.resource,
+    title: "What changes when a source can quote its own price?",
+    topics: ["agent commerce", "digital publishing", "micropayments"],
+  } as const;
+}
+
+export const DEMO_SOURCE = createDemoSource();
 
 export const citationSchema = z.object({
   display_text: z.string().min(1),

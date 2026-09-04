@@ -55,6 +55,8 @@
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   min-height: 100vh;
   background: var(--nr-page);
@@ -76,8 +78,8 @@ a:focus-visible {
 
 .publication-shell {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  min-height: 100vh;
 }
 
 .publication-shell main {
@@ -470,6 +472,7 @@ a:focus-visible {
   align-items: baseline;
   justify-content: space-between;
   gap: 20px;
+  flex-wrap: wrap;
   max-width: 1000px;
   margin: 0 auto;
   padding: 22px var(--nr-gutter);
