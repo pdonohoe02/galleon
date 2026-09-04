@@ -33,6 +33,33 @@ function signingKeyPath(): string {
   return process.env.GALLEON_SIGNING_KEY_PATH ?? "/tmp/galleon-demo-signing-private.jwk.json";
 }
 
+// Deployed, platform-web runs as several services (web, app, console), each in
+// its own container. A key generated to a file is private to one container, so
+// an offer signed by one service fails verification on another. When
+// GALLEON_SIGNING_KEY_JWK is set (the same private P-256 JWK on every
+// service), it is the key, and no file is read or written.
+function keyFileFromEnv(): KeyFile | undefined {
+  const raw = process.env.GALLEON_SIGNING_KEY_JWK;
+  if (!raw) return undefined;
+  const privateJwk = JSON.parse(raw) as JWK;
+  if (
+    privateJwk.kty !== "EC" ||
+    privateJwk.crv !== "P-256" ||
+    !privateJwk.d ||
+    !privateJwk.x ||
+    !privateJwk.y
+  ) {
+    throw new Error("GALLEON_SIGNING_KEY_JWK must be a private P-256 JWK.");
+  }
+  const publicJwk: JWK = {
+    crv: privateJwk.crv,
+    kty: privateJwk.kty,
+    x: privateJwk.x,
+    y: privateJwk.y,
+  };
+  return { privateJwk, publicJwk };
+}
+
 async function createKeyFile(path: string): Promise<KeyFile> {
   const { privateKey, publicKey } = await generateKeyPair(
     GALLEON_SIGNING_ALGORITHM,
@@ -54,13 +81,18 @@ async function createKeyFile(path: string): Promise<KeyFile> {
 
 async function loadKeyFile(): Promise<KeyFile> {
   if (!keyFilePromise) {
-    const path = signingKeyPath();
-    keyFilePromise = readFile(/* turbopackIgnore: true */ path, "utf8")
-      .then((value) => JSON.parse(value) as KeyFile)
-      .catch((error: NodeJS.ErrnoException) => {
-        if (error.code !== "ENOENT") throw error;
-        return createKeyFile(path);
-      });
+    const fromEnv = keyFileFromEnv();
+    if (fromEnv) {
+      keyFilePromise = Promise.resolve(fromEnv);
+    } else {
+      const path = signingKeyPath();
+      keyFilePromise = readFile(/* turbopackIgnore: true */ path, "utf8")
+        .then((value) => JSON.parse(value) as KeyFile)
+        .catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== "ENOENT") throw error;
+          return createKeyFile(path);
+        });
+    }
   }
   return await keyFilePromise;
 }

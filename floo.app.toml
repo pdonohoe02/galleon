@@ -79,8 +79,9 @@ memory = "1Gi"
 # is app-wide: floo's [resources] applies to all services, so all four stay
 # resident. min and max are both 1 — exactly one instance each.
 #
-# Pinning to one instance is also required: the ES256 signing key is generated
-# to a file at GALLEON_SIGNING_KEY_PATH, so a second instance would mint a
-# different key and offers signed by one would fail verification on the other.
+# The ES256 signing key is the secret GALLEON_SIGNING_KEY_JWK, set identically
+# on web, app, and console, so every platform container signs and verifies
+# with one key. Without it each container mints its own key to a file, and an
+# offer signed by web fails verification on app with OFFER_INVALID.
 min_instances = 1
 max_instances = 1
