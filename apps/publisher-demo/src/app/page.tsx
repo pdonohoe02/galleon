@@ -1,3 +1,4 @@
+import { GalleonMark } from "./galleon-mark";
 import { WebMcpTools } from "./webmcp-tools";
 import { UnlockedSource } from "./unlocked-source";
 import { consumerUrl } from "../server/urls";
@@ -77,8 +78,8 @@ export default function PublisherDemoPage() {
                     entitlement that this publication can redeem.
                   </p>
                 </div>
-                <span className="lock-mark" aria-hidden="true">
-                  ◇
+                <span className="lock-mark">
+                  <GalleonMark size={22} title="Settled through Galleon" />
                 </span>
               </div>
 

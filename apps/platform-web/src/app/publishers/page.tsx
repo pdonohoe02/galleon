@@ -1,4 +1,4 @@
-import { DEMO_IDS, formatUsd } from "@galleon/contracts";
+import { DEMO_IDS, formatUsd, getPublisherDemoOrigin } from "@galleon/contracts";
 import {
   AppSidebar,
   AreaChart,
@@ -21,7 +21,9 @@ import { iconAgents, iconOverview, iconSettings, iconSources, iconSpending } fro
 
 export const dynamic = "force-dynamic";
 
-const publisherOrigin = process.env.GALLEON_PUBLISHER_ORIGIN ?? "http://127.0.0.1:3001";
+// Same source of truth as the publisher demo and the seed: the origin the
+// console shows must be the one entitlements are redeemed against.
+const publisherOrigin = getPublisherDemoOrigin(process.env.GALLEON_PUBLISHER_DEMO_URL);
 const marketingUrl = process.env.GALLEON_ISSUER ?? "http://galleon.localhost:3200";
 
 const dayFormat = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { consumerUrl } from "../server/urls";
+import { GalleonMark } from "./galleon-mark";
 
 import "./publication.css";
 
@@ -34,7 +35,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="publication-footer-inner">
             <span>Northline Review</span>
             <span>Independent analysis of digital markets</span>
-            <span>
+            <span className="powered-by">
+              <GalleonMark size={16} />
               Powered by Galleon · <a href={walletUrl}>create a wallet</a>
             </span>
           </div>

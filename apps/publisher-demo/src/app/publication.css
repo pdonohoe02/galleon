@@ -481,6 +481,12 @@ a:focus-visible {
   color: var(--nr-softer);
 }
 
+.powered-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 900px) {
