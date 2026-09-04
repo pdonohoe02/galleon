@@ -1,8 +1,9 @@
-import { DEMO_IDS, DEMO_SOURCE } from "@galleon/contracts";
+import { createDemoSource, DEMO_IDS } from "@galleon/contracts";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { callGalleon } from "../../../../server/galleon";
 import { paidSource } from "../../../../server/paid-source";
+import { publisherOrigin } from "../../../../server/urls";
 import {
   deriveSessionBinding,
   PUBLISHER_SESSION_COOKIE,
@@ -30,12 +31,14 @@ export async function POST(request: NextRequest) {
     );
   }
   const binding = deriveSessionBinding(sessionId);
+  const origin = publisherOrigin();
+  const demoSource = createDemoSource(origin);
 
   try {
     const upstream = await callGalleon("/api/v1/publisher/entitlements/redeem", {
       entitlement_token: entitlementToken,
       resource_id: DEMO_IDS.resource,
-      publisher_origin: "http://127.0.0.1:3001",
+      publisher_origin: origin,
       redemption_nonce: binding.redemptionNonce,
       publisher_session_hash: binding.publisherSessionHash,
     });
@@ -48,10 +51,10 @@ export async function POST(request: NextRequest) {
       status: "unlocked",
       source: {
         resource_id: DEMO_IDS.resource,
-        canonical_url: DEMO_SOURCE.canonical_url,
-        title: DEMO_SOURCE.title,
-        content_sha256: DEMO_SOURCE.content_sha256,
-        citation: DEMO_SOURCE.citation,
+        canonical_url: demoSource.canonical_url,
+        title: demoSource.title,
+        content_sha256: demoSource.content_sha256,
+        citation: demoSource.citation,
         ...paidSource,
       },
       redemption,

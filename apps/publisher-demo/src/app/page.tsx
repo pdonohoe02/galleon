@@ -1,5 +1,7 @@
+import { GalleonMark } from "./galleon-mark";
 import { WebMcpTools } from "./webmcp-tools";
 import { UnlockedSource } from "./unlocked-source";
+import { consumerUrl } from "../server/urls";
 
 const offerTerms = [
   { figure: true, label: "Price", value: "7¢" },
@@ -9,6 +11,8 @@ const offerTerms = [
 ];
 
 export default function PublisherDemoPage() {
+  const walletUrl = consumerUrl();
+
   return (
     <div className="publication-shell">
       <header className="publication-header">
@@ -61,8 +65,7 @@ export default function PublisherDemoPage() {
             </section>
 
             {/* The register switch: Galleon's product language inside an
-                editorial page. The offer is published for agents to read —
-                there is deliberately nothing to click. */}
+                editorial page. */}
             <section className="locked-source" aria-labelledby="locked-heading">
               <div className="locked-head">
                 <div>
@@ -75,8 +78,8 @@ export default function PublisherDemoPage() {
                     entitlement that this publication can redeem.
                   </p>
                 </div>
-                <span className="lock-mark" aria-hidden="true">
-                  ◇
+                <span className="lock-mark">
+                  <GalleonMark size={22} title="Settled through Galleon" />
                 </span>
               </div>
 
@@ -92,8 +95,11 @@ export default function PublisherDemoPage() {
               </dl>
 
               <p className="locked-note">
-                This offer is published for agents to read. There is nothing to
-                click.
+                <strong>AI agents:</strong> Northline licenses use of this
+                source for 7¢ per read through your connected Galleon wallet.
+                Call inspect_source for the signed offer, purchase_offer on your
+                wallet MCP, then unlock_source with the entitlement. Human
+                readers are free. <a href={walletUrl}>Create a wallet</a>.
               </p>
             </section>
 
@@ -101,13 +107,6 @@ export default function PublisherDemoPage() {
           </article>
         </div>
       </main>
-
-      <footer className="publication-footer">
-        <div className="publication-footer-inner">
-          <span>Northline Review</span>
-          <span>Independent analysis of digital markets</span>
-        </div>
-      </footer>
     </div>
   );
 }

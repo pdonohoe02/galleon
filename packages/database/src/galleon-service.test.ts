@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { DEMO_IDS } from "@galleon/contracts";
+import { DEMO_IDS, getPublisherDemoOrigin } from "@galleon/contracts";
 import { describe, expect, it } from "vitest";
 
 import { createGalleonService } from "./galleon-service";
@@ -10,6 +10,9 @@ const describeIntegration =
 
 describeIntegration("Galleon demo ledger flow", () => {
   const service = createGalleonService();
+  const publisherOrigin = getPublisherDemoOrigin(
+    process.env.GALLEON_PUBLISHER_DEMO_URL,
+  );
   const sessionHash = "a".repeat(64);
   const nonce = "test-redemption-nonce-with-at-least-128-bits";
 
@@ -54,7 +57,7 @@ describeIntegration("Galleon demo ledger flow", () => {
 
     const redemption = await service.redeemEntitlement({
       entitlementToken: returning.entitlement.token,
-      publisherOrigin: "http://127.0.0.1:3001",
+      publisherOrigin,
       publisherSessionHash: sessionHash,
       redemptionNonce: nonce,
       resourceId: DEMO_IDS.resource,
@@ -62,7 +65,7 @@ describeIntegration("Galleon demo ledger flow", () => {
     expect(redemption.status).toBe("redeemed");
     const retryRedemption = await service.redeemEntitlement({
       entitlementToken: returning.entitlement.token,
-      publisherOrigin: "http://127.0.0.1:3001",
+      publisherOrigin,
       publisherSessionHash: sessionHash,
       redemptionNonce: nonce,
       resourceId: DEMO_IDS.resource,

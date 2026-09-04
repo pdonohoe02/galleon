@@ -1,10 +1,11 @@
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
 
 import {
+  createDemoSource,
   DEMO_IDS,
-  DEMO_SOURCE,
   entitlementClaimsSchema,
   formatUsd,
+  getPublisherDemoOrigin,
   type EntitlementClaims,
   type OfferPresentationClaims,
   type PurchaseOfferInput,
@@ -19,7 +20,6 @@ import {
 import { createDatabase } from "./connection";
 
 const DATABASE_URL = "postgresql://galleon:galleon@127.0.0.1:5432/galleon";
-const PUBLISHER_ORIGIN = "http://127.0.0.1:3001";
 const MCP_AUDIENCE = "galleon-wallet-mcp";
 const SEED_TRANSACTION_ID = "00000000-0000-4000-8000-000000000009";
 const SEED_DEBIT_ID = "00000000-0000-4000-8000-000000000010";
@@ -155,6 +155,10 @@ export function createGalleonService(
 ) {
   const database = createDatabase(databaseUrl);
   const { client } = database;
+  const publisherOrigin = getPublisherDemoOrigin(
+    process.env.GALLEON_PUBLISHER_DEMO_URL,
+  );
+  const demoSource = createDemoSource(publisherOrigin);
   let seedPromise: Promise<void> | undefined;
 
   async function ensureDemoData(): Promise<void> {
@@ -168,8 +172,11 @@ export function createGalleonService(
       `;
       await sql`
         INSERT INTO publisher_origins (id, publisher_id, origin, verified)
-        VALUES ('00000000-0000-4000-8000-000000000012', ${DEMO_IDS.publisher}, ${PUBLISHER_ORIGIN}, true)
-        ON CONFLICT (origin) DO UPDATE SET verified = true, updated_at = now()
+        VALUES ('00000000-0000-4000-8000-000000000012', ${DEMO_IDS.publisher}, ${publisherOrigin}, true)
+        ON CONFLICT (id) DO UPDATE SET
+          origin = EXCLUDED.origin,
+          verified = EXCLUDED.verified,
+          updated_at = now()
       `;
       await sql`
         INSERT INTO wallets (id, owner_type, publisher_id, public_ref, currency, mode)
@@ -194,15 +201,18 @@ export function createGalleonService(
           content_type, mime_type, language, topics, questions_answered, citation,
           content_sha256, status
         ) VALUES (
-          ${DEMO_IDS.resource}, ${DEMO_IDS.publisher}, ${DEMO_SOURCE.canonical_url},
-          ${DEMO_SOURCE.title}, ${DEMO_SOURCE.description}, ${JSON.stringify(DEMO_SOURCE.authors)}::jsonb,
-          ${DEMO_SOURCE.published_at}, ${DEMO_SOURCE.content_type}, 'text/html',
-          ${DEMO_SOURCE.language}, ${JSON.stringify(DEMO_SOURCE.topics)}::jsonb,
-          ${JSON.stringify(DEMO_SOURCE.questions_answered)}::jsonb, ${JSON.stringify(DEMO_SOURCE.citation)}::jsonb,
-          ${DEMO_SOURCE.content_sha256}, 'active'
+          ${DEMO_IDS.resource}, ${DEMO_IDS.publisher}, ${demoSource.canonical_url},
+          ${demoSource.title}, ${demoSource.description}, ${JSON.stringify(demoSource.authors)}::text::jsonb,
+          ${demoSource.published_at}, ${demoSource.content_type}, 'text/html',
+          ${demoSource.language}, ${JSON.stringify(demoSource.topics)}::text::jsonb,
+          ${JSON.stringify(demoSource.questions_answered)}::text::jsonb,
+          ${JSON.stringify(demoSource.citation)}::text::jsonb,
+          ${demoSource.content_sha256}, 'active'
         ) ON CONFLICT (id) DO UPDATE SET
+          canonical_url = EXCLUDED.canonical_url,
           title = EXCLUDED.title,
           description = EXCLUDED.description,
+          citation = EXCLUDED.citation,
           content_sha256 = EXCLUDED.content_sha256,
           updated_at = now()
       `;
@@ -212,14 +222,17 @@ export function createGalleonService(
           content_type, mime_type, language, topics, questions_answered, citation,
           content_sha256, status
         ) VALUES (
-          ${DEMO_IDS.secondResource}, ${DEMO_IDS.publisher}, 'http://127.0.0.1:3001/field-notes',
+          ${DEMO_IDS.secondResource}, ${DEMO_IDS.publisher}, ${`${publisherOrigin}/field-notes`},
           'Field notes: pricing small, authoritative sources',
           'A companion note on offer design for specialist publishers.',
-          ${JSON.stringify(["Mara Venn"])}::jsonb, '2026-08-29T09:00:00Z', 'research_note', 'text/html', 'en',
-          ${JSON.stringify(["publisher economics"])}::jsonb, ${JSON.stringify(["How should a specialist source be priced?"])}::jsonb,
-          ${JSON.stringify({ display_text: "Venn, M. (2026). Field notes. Northline Review.", canonical_url: "http://127.0.0.1:3001/field-notes" })}::jsonb,
+          ${JSON.stringify(["Mara Venn"])}::text::jsonb, '2026-08-29T09:00:00Z', 'research_note', 'text/html', 'en',
+          ${JSON.stringify(["publisher economics"])}::text::jsonb, ${JSON.stringify(["How should a specialist source be priced?"])}::text::jsonb,
+          ${JSON.stringify({ display_text: "Venn, M. (2026). Field notes. Northline Review.", canonical_url: `${publisherOrigin}/field-notes` })}::text::jsonb,
           'cfda1708f3140b2dd5d6fc1ac4de66942ee870f25c46d5d8fcb324c811cf4533', 'active'
-        ) ON CONFLICT (id) DO NOTHING
+        ) ON CONFLICT (id) DO UPDATE SET
+          canonical_url = EXCLUDED.canonical_url,
+          citation = EXCLUDED.citation,
+          updated_at = now()
       `;
       await sql`
         INSERT INTO offers (
@@ -477,7 +490,7 @@ export function createGalleonService(
           id, jti, purchase_id, presentation_jti, publisher_origin, claims, status, expires_at
         ) VALUES (
           ${randomUUID()}, ${entitlementClaims.jti}, ${purchaseId}, ${offer.jti},
-          ${offer.publisher_origin}, ${JSON.stringify(entitlementClaims)}::jsonb, 'issued',
+          ${offer.publisher_origin}, ${JSON.stringify(entitlementClaims)}::text::jsonb, 'issued',
           ${new Date(entitlementExp * 1000).toISOString()}
         )
       `;
@@ -504,7 +517,7 @@ export function createGalleonService(
       };
       await sql`
         INSERT INTO idempotency_keys (wallet_id, key, request_hash, response)
-        VALUES (${walletId}, ${input.idempotency_key}, ${requestHash}, ${JSON.stringify(response)}::jsonb)
+        VALUES (${walletId}, ${input.idempotency_key}, ${requestHash}, ${JSON.stringify(response)}::text::jsonb)
       `;
       return response;
     });
